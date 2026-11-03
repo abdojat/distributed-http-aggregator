@@ -1,117 +1,85 @@
 # Quickstart and Validation Guide
 
-This guide describes the planned Java 21 implementation. Until the Java tasks are implemented,
-commands below are expected to fail because no Java application exists yet. The Python prototype is
-intentionally retained but is not valid evidence for this guide.
+This guide validates the final Java 21 implementation. The preserved Python prototype is
+historical and is not valid Java evidence or part of the Maven build.
 
 ## Prerequisites
 
-- Java Development Kit 21 (`java -version` and `javac -version`)
-- Apache Maven 3.9+ (`mvn -version`) or the Maven Wrapper once created
+- JDK 21 (`java -version`)
 - Windows PowerShell from the repository root
-- Loopback ports available for OS assignment
+- The included Maven Wrapper (`.\mvnw.cmd`); it provisions Maven 3.9.9
+- Loopback ports available for OS assignment and standalone workers
 
-## Build and Automated Validation
+## Clean build and automated validation
 
 ```powershell
 java -version
-mvn -version
-mvn clean verify
+.\mvnw.cmd -version
+.\mvnw.cmd clean verify
+.\mvnw.cmd package -DskipTests
 ```
 
-Expected after implementation: Maven compiles with release 21, JUnit 5 unit/integration/performance
-checks pass, and an executable JAR is created under `target/`. Timing-sensitive tests must not run
-in parallel with other performance workloads.
+The clean build compiles Java release 21, runs all JUnit 5 tests, and creates
+`target\distributed-http-aggregator.jar`.
 
-To run groups during development:
+Focused test groups:
 
 ```powershell
-mvn -Dtest='**/unit/**' test
-mvn -Dtest='**/integration/**' test
-mvn -Dtest='**/performance/**' test
+.\mvnw.cmd -Dtest='**/unit/**' test
+.\mvnw.cmd -Dtest='**/integration/**' test
+.\mvnw.cmd -Dtest='**/performance/**' test
 ```
 
-## Inspect Available Demonstrations
+## Demonstrations
 
 ```powershell
-java -jar target/distributed-http-aggregator.jar list-scenarios
+java -jar target\distributed-http-aggregator.jar list-scenarios
+java -jar target\distributed-http-aggregator.jar demo --scenario normal
+java -jar target\distributed-http-aggregator.jar demo --scenario http-500
+java -jar target\distributed-http-aggregator.jar demo --scenario unavailable
+java -jar target\distributed-http-aggregator.jar demo --scenario timeout
+java -jar target\distributed-http-aggregator.jar demo --scenario simultaneous
+java -jar target\distributed-http-aggregator.jar demo --scenario partial-failure
+java -jar target\distributed-http-aggregator.jar demo --scenario all-fail
 ```
 
-Expected names: `normal`, `http-500`, `unavailable`, `timeout`, `simultaneous`,
-`partial-failure`, and `all-fail`.
+Expected outcomes are, respectively: seven listed scenarios; three successes; one HTTP error
+with successful siblings; one connection failure with successful siblings; independent timeout
+classification; five simultaneous successes in configured order; mixed success and failure
+outcomes; and five failures with zero aggregated data. Valid remote failures exit `0`.
 
-## Validate Required Scenarios
-
-```powershell
-java -jar target/distributed-http-aggregator.jar demo --scenario normal
-java -jar target/distributed-http-aggregator.jar demo --scenario http-500
-java -jar target/distributed-http-aggregator.jar demo --scenario unavailable
-java -jar target/distributed-http-aggregator.jar demo --scenario timeout
-java -jar target/distributed-http-aggregator.jar demo --scenario simultaneous
-java -jar target/distributed-http-aggregator.jar demo --scenario partial-failure
-java -jar target/distributed-http-aggregator.jar demo --scenario all-fail
-```
-
-Expected behavior, in order:
-
-- `normal`: all workers succeed in configured order; total duration is near the longest delay.
-- `http-500`: one `http_error` with status 500; successful data remains.
-- `unavailable`: one `connection_failure`; successful siblings remain.
-- `timeout`: one independent `timeout` near its configured boundary.
-- `simultaneous`: every worker appears exactly once with correct association and order.
-- `partial-failure`: successes remain and each failure has its own status, duration, and reason.
-- `all-fail`: exit 0 with a complete report, empty data, and one failure per worker.
-
-Run invalid configuration validation:
+## Invalid configuration and report output
 
 ```powershell
-java -jar target/distributed-http-aggregator.jar aggregate --config examples\invalid-run.json
-```
-
-Expected: exit 2, all detectable field errors on stderr, empty stdout, and no request attempt.
-
-## Write and Inspect a Report
-
-```powershell
-java -jar target/distributed-http-aggregator.jar demo --scenario partial-failure --output report.json
+java -jar target\distributed-http-aggregator.jar aggregate --config examples\invalid-run.json
+java -jar target\distributed-http-aggregator.jar demo --scenario partial-failure --output report.json
 Get-Content .\report.json
 ```
 
-Compare with [aggregation-report.schema.json](contracts/aggregation-report.schema.json). The report
-must contain total duration, ordered worker outcomes, source-associated successful data, and failure
-details.
+Invalid configuration exits `2`, emits all detectable errors as structured JSON on stderr, emits
+empty stdout, and starts no requests. Reports conform to
+[aggregation-report.schema.json](contracts/aggregation-report.schema.json).
 
-## Run Standalone Workers
+## Standalone workers
 
-Open three PowerShell windows and choose distinct ports:
-
-```powershell
-java -jar target/distributed-http-aggregator.jar worker --id worker-a --host 127.0.0.1 --port 8101 --delay-ms 150 --behavior success --data-json '{"value":1}'
-```
-
-Repeat for `worker-b` and `worker-c` with ports 8102 and 8103. In another window:
+Open three PowerShell windows and run one command in each:
 
 ```powershell
-java -jar target/distributed-http-aggregator.jar aggregate --config .\examples\run-normal.json
+java -jar target\distributed-http-aggregator.jar worker --id standalone-a --host 127.0.0.1 --port 9001 --delay-ms 150 --behavior success
+java -jar target\distributed-http-aggregator.jar worker --id standalone-b --host 127.0.0.1 --port 9002 --delay-ms 150 --behavior success
+java -jar target\distributed-http-aggregator.jar worker --id standalone-c --host 127.0.0.1 --port 9003 --delay-ms 150 --behavior success
 ```
 
-Ctrl+C must stop Jetty and owned executors before exit. Prefer `demo` for grading because it uses
-OS-assigned ports and automatic cleanup.
+In a fourth window:
 
-## Java Verification Record
+```powershell
+java -jar target\distributed-http-aggregator.jar aggregate --config examples\run-standalone.json
+```
 
-After implementation, append to `verification.md`:
+Ctrl+C invokes cleanup for each standalone worker. The `demo` command is preferred for grading
+because it owns and cleans up all loopback workers automatically.
 
-- exact `java` and Maven versions;
-- pinned Jetty, Jackson, JUnit, and Maven plugin versions;
-- `mvn clean verify` result and test counts;
-- 20-run simultaneous-completion result;
-- concurrent, sequential, timeout, and tolerance measurements;
-- lifecycle/cleanup evidence and FR/SC audit.
-
-Do not count the preserved Python batches as Java verification.
-
-## Contract References
+## Contract references
 
 - [Worker HTTP contract](contracts/worker-api.md)
 - [Run configuration schema](contracts/run-configuration.schema.json)

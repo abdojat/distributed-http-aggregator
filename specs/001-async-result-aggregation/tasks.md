@@ -124,10 +124,10 @@ returns exit 2, every field error, empty stdout, and zero request attempts.
 - [x] T046 [P] Add repeated lifecycle verification for success, failure, timeout, and cancellation in `src/test/java/edu/university/aggregator/integration/ResourceCleanupTest.java`.
 - [x] T047 Run `mvnw.cmd clean verify` and append commands, environment, dependency versions, timings, test counts, and failures/passes to `specs/001-async-result-aggregation/verification.md` (depends on T044–T046).
 - [x] T048 Audit FR-001–FR-024 and SC-001–SC-009 against Java source and named JUnit tests in `specs/001-async-result-aggregation/verification.md` (depends on T047).
-- [ ] T049 Audit `pom.xml` for Java 21 and constitution-approved dependencies, then record dependency-tree and executable-JAR smoke evidence in `specs/001-async-result-aggregation/verification.md` (depends on T001–T048).
-- [ ] T050 [P] Rewrite `README.md` for Java 21/Maven setup, architecture, commands, scenarios, output, and contract links while preserving a clearly labeled Python-prototype history note.
-- [ ] T051 Execute every command in `specs/001-async-result-aggregation/quickstart.md` and append reproducibility evidence to `specs/001-async-result-aggregation/verification.md` (depends on T047, T050).
-- [ ] T052 Perform and record the final constitution v2.0.0 review for Java-only source, `sendAsync`, `CompletableFuture`, bounded resources, deterministic results, failure isolation, cleanup, redaction, approved dependencies, and JUnit evidence in `specs/001-async-result-aggregation/verification.md` (depends on T051).
+- [x] T049 Audit `pom.xml` for Java 21 and constitution-approved dependencies, then record dependency-tree and executable-JAR smoke evidence in `specs/001-async-result-aggregation/verification.md` (depends on T001–T048).
+- [x] T050 [P] Rewrite `README.md` for Java 21/Maven setup, architecture, commands, scenarios, output, and contract links while preserving a clearly labeled Python-prototype history note.
+- [x] T051 Execute every command in `specs/001-async-result-aggregation/quickstart.md` and append reproducibility evidence to `specs/001-async-result-aggregation/verification.md` (depends on T047, T050).
+- [x] T052 Perform and record the final constitution v2.0.0 review for Java-only source, `sendAsync`, `CompletableFuture`, bounded resources, deterministic results, failure isolation, cleanup, redaction, approved dependencies, and JUnit evidence in `specs/001-async-result-aggregation/verification.md` (depends on T051).
 
 ## Dependencies and Execution Order
 

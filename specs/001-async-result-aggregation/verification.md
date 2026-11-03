@@ -386,6 +386,88 @@
 
 ### T043–T048 checkpoint
 
-T043, T044, T045, T046, T047, and T048 are complete. The final System Verification checkpoint
-for this requested scope is **PASS**. T049–T052 were not started or marked; no final documentation
-tasks were performed. Remaining blockers: none for T043–T048.
+T043, T044, T045, T046, T047, and T048 are complete. The cross-story System Verification
+checkpoint is **PASS**. The final documentation and delivery gate is recorded below.
+
+## Java 21 Verification — T049–T052 Final Documentation and Delivery Gate
+
+**Date**: 2026-11-03  
+**Environment**: Windows 11 PowerShell, Eclipse Temurin OpenJDK 21.0.11 LTS  
+**Build tool**: Maven Wrapper 3.3.4 provisioning Apache Maven 3.9.9  
+**Repository state**: Java implementation is the final deliverable; Python source and tests remain
+preserved historical prototype work and are excluded from Maven compilation.
+
+### T049 — dependency and executable-JAR audit
+
+The final `pom.xml` audit records Java compiler release 21 and only the approved direct stack:
+Jetty Server 12.0.29, Jackson Databind 2.18.3, and JUnit Jupiter 5.11.4 (test scope), with
+Compiler 3.13.0, Surefire 3.5.2, and Shade 3.6.0. No unrelated dependency was introduced.
+
+- `.\mvnw.cmd dependency:tree -DoutputType=text`: **PASS**, exit 0. The dependency tree contains
+  only the pinned Jetty/Jackson runtime graph and JUnit Jupiter test graph.
+- `.\mvnw.cmd package -DskipTests`: **PASS**, exit 0. The shaded artifact was created at
+  `target\distributed-http-aggregator.jar`.
+- `java -jar target\distributed-http-aggregator.jar list-scenarios`: **PASS**, exit 0; all seven
+  scenario names were emitted as JSON.
+- `java -jar target\distributed-http-aggregator.jar demo --scenario normal`: **PASS**, exit 0;
+  `complete=true`, three outcomes, and three aggregated data items.
+
+Shade emitted known duplicate metadata/module-descriptor warnings only; there were no build or
+runtime errors.
+
+### T050 — README completion
+
+[README.md](../../README.md) now identifies the university assignment purpose, selected option,
+Java 21 stack, architecture, asynchronous execution model, PowerShell setup/build, exact
+demonstrations, tests, report format, reliability behavior, SDD links, and the Engineering
+Reflection. It explicitly labels the Python implementation as historical and non-deliverable.
+
+Checkpoint: **PASS** — documentation matches the final Java artifact and commands.
+
+### T051 — quickstart reproducibility
+
+[quickstart.md](quickstart.md) was reconciled with the implemented CLI, shaded JAR filename,
+scenario names, Windows path syntax, exit codes, and standalone-worker lifecycle. The following
+commands were executed after the clean verification build:
+
+| Command group | Result |
+|---|---|
+| `java -version` and `.\mvnw.cmd -version` | PASS — Java 21.0.11 and Maven 3.9.9 |
+| `.\mvnw.cmd clean verify` | PASS — 51 tests, 0 failures, 0 errors, 0 skipped |
+| `.\mvnw.cmd package -DskipTests` | PASS |
+| `.\mvnw.cmd -Dtest='**/unit/**' test` | PASS |
+| `.\mvnw.cmd -Dtest='**/integration/**' test` | PASS |
+| `.\mvnw.cmd -Dtest='**/performance/**' test` | PASS |
+| `list-scenarios` | PASS — seven scenarios, exit 0 |
+| `demo --scenario normal` | PASS — 3/3 success, exit 0 |
+| `demo --scenario http-500` | PASS — HTTP error isolated, 2 successes, exit 0 |
+| `demo --scenario unavailable` | PASS — connection failure isolated, 2 successes, exit 0 |
+| `demo --scenario timeout` | PASS — timeout outcomes isolated, exit 0 |
+| `demo --scenario simultaneous` | PASS — five ordered successes, exit 0 |
+| `demo --scenario partial-failure` | PASS — 5 outcomes, 1 success, exit 0 |
+| `demo --scenario all-fail` | PASS — 5 failures, zero data, exit 0 |
+| `aggregate --config examples\invalid-run.json` | PASS — exit 2, empty stdout, 9 errors |
+| partial-failure `--output report.json` and `Get-Content` | PASS — valid JSON report, 5 outcomes |
+| three documented standalone workers plus `run-standalone.json` | PASS — 3 successes, exit 0 |
+
+Remote failures are valid reports and therefore exit 0. Invalid configuration is rejected before
+I/O with exit 2. Standalone workers were started on ports 9001–9003 and stopped by targeted
+process IDs after the aggregation check.
+
+### T052 — constitution v2.0.0 final compliance review
+
+| Constitution gate | Evidence | Result |
+|---|---|---|
+| Java-only final implementation | Maven compiles 24 Java sources; Python is excluded and labeled historical | PASS |
+| Non-blocking HTTP | `WorkerHttpClient` calls `HttpClient.sendAsync`; no `send` call | PASS |
+| CompletableFuture orchestration | One future per worker, `allOf` barrier, configured-order collection | PASS |
+| Bounded concurrency and cleanup | Fixed executor, `AsyncPermitPool`, finite deadlines, cancellation, try-with-resources, shutdown tests | PASS |
+| Deterministic aggregation | Immutable records, unique identities, configured order, derived data invariant | PASS |
+| Failure isolation | HTTP, connection, protocol, invalid JSON, timeout, and cancellation outcomes | PASS |
+| Timeout and cancellation races | `TimeoutTest`, `CancellationCleanupTest`, `ResourceCleanupTest`, acceptance matrix | PASS |
+| Safe diagnostics | `DiagnosticRedactionTest`; stable codes only, no secrets/bodies/raw exceptions | PASS |
+| Approved dependencies | Dependency-tree audit above; pinned Jetty, Jackson, JUnit, Maven plugins | PASS |
+| Automated coverage | 51 JUnit tests, including integration, performance, contract, and cleanup tests | PASS |
+
+No constitutional exception or remaining delivery blocker was identified. T049, T050, T051, and
+T052 acceptance checkpoints are **PASS**.
