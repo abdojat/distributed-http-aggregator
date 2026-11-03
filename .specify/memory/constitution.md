@@ -1,9 +1,9 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 -> 1.1.0
+- Version change: 1.1.0 -> 2.0.0
 - Modified principles: none
 - Modified sections:
-  - Assignment Constraints (added mandatory technology stack and dependency policy)
+  - Assignment Constraints (replaced the Python stack with the mandatory Java stack)
 - Added sections: none
 - Removed sections: none
 - Follow-up TODOs: none
@@ -51,13 +51,22 @@ outcomes. Tests MUST be repeatable and MUST NOT depend on public internet availa
 
 ## Assignment Constraints
 
-- The project MUST use Python 3.12 as its programming language and runtime baseline.
-- Asynchronous concurrency MUST be implemented with `asyncio`.
-- Asynchronous HTTP client operations MUST use `httpx`.
-- Simulated HTTP worker servers MUST use `aiohttp.web`.
-- Automated tests MUST use `pytest`, with `pytest-asyncio` for asynchronous test cases and
-  fixtures.
-- Python standard-library modules MAY be used wherever appropriate.
+- The project MUST be implemented exclusively in Java 21. Python artifacts MAY remain only as
+  historical prototype evidence and MUST NOT be part of the submitted Java runtime or build.
+- Asynchronous concurrency MUST use `CompletableFuture`; outbound request paths MUST remain
+  non-blocking and MUST NOT call `join()` or `get()` until the final orchestration boundary where
+  all independently progressing operations are collected.
+- Outbound HTTP operations MUST use the Java 21 `java.net.http.HttpClient` API and MUST invoke
+  `HttpClient.sendAsync`; `send` is prohibited in request-processing paths.
+- The build and dependency-management system MUST be Apache Maven, with a compiler release of 21.
+- Automated tests MUST use JUnit 5. Integration tests MUST use controlled loopback servers and MUST
+  remain independent of public internet services.
+- Simulated HTTP worker servers MUST use Eclipse Jetty 12 as an embedded Java HTTP server. JSON
+  parsing and serialization MUST use Jackson 2.x. Their exact compatible versions MUST be pinned
+  in `pom.xml` and recorded in verification evidence.
+- Java 21 standard-library APIs MAY be used wherever appropriate, including
+  `ScheduledExecutorService` for non-blocking simulated delays and `System.nanoTime()` for elapsed
+  duration measurement.
 - Any additional third-party dependency MUST have a documented justification describing why the
   approved stack or standard library cannot reasonably satisfy the requirement.
 - The implementation MUST remain focused on an asynchronous HTTP client and result aggregator;
@@ -105,4 +114,4 @@ accepted, and before submission. Reviewers MUST record any exception under the w
 Complexity that is not required by the assignment or these principles MUST be removed or justified
 in writing.
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-03
+**Version**: 2.0.0 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-03

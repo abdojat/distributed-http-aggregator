@@ -2,12 +2,13 @@
 
 ## Modeling Rules
 
-- Domain records are frozen, slotted data classes to prevent mutation after validation.
+- Domain values are immutable Java records; closed value sets are Java enums. Jackson annotations
+  or configuration preserve the published snake_case JSON names.
 - Enumerations serialize to the lowercase string values defined here.
 - Internal durations are elapsed monotonic nanoseconds; public JSON durations are milliseconds.
-- Configuration order is retained as an explicit tuple/list position and is the canonical report
+- Configuration order is retained as an explicit list position and is the canonical report
   order.
-- Models contain no sockets, clients, tasks, runners, or open files; resource ownership belongs to
+- Models contain no servers, clients, futures, executors, or open files; resource ownership belongs to
   orchestration components.
 
 ## Enumerations
@@ -147,7 +148,8 @@ worker tasks directly.
 
 ## Entity: AggregationCancelled
 
-A documented domain cancellation derived from `asyncio.CancelledError`.
+A documented domain cancellation produced when the parent Java `CompletableFuture` aggregation is
+cancelled.
 
 | Field | Type | Required | Rules |
 |---|---|---:|---|

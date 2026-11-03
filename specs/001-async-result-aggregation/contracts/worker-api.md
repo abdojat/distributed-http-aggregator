@@ -61,8 +61,9 @@ object that lacks the required fields. This behavior is for fault injection only
 
 ### Delay behavior
 
-The worker waits asynchronously for its configured non-negative delay before responding. A client
-disconnect or server shutdown cancels the delay; the handler does not suppress cancellation.
+The Jetty worker schedules its configured non-negative delay without blocking a request thread. A
+client disconnect or server shutdown cancels scheduled completion; the handler does not suppress
+cancellation.
 
 ## `GET /health`
 

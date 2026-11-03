@@ -1,5 +1,10 @@
 # Implementation Verification
 
+> **Migration status (2026-11-03):** All evidence below was produced by the historical Python 3.12
+> prototype. It is preserved for comparison only and does not verify the mandatory Java 21
+> implementation. Java completion status was reset in `tasks.md`; new Maven/JUnit evidence must be
+> appended in a separate **Java 21 Verification** section before migrated tasks are completed.
+
 ## Batch: T001–T010 — Setup and Foundation
 
 **Date**: 2026-11-03

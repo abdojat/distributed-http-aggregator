@@ -2,11 +2,12 @@
 
 ## General behavior
 
-- Entry point: `python -m distributed_http_aggregator <command>`
+- Entry point: `java -jar target/distributed-http-aggregator.jar <command>`
 - Machine-readable command results go to stdout or an explicitly selected file.
 - Human-readable diagnostics and validation messages go to stderr.
 - Paths may be relative to the current directory or absolute Windows paths.
-- Commands execute under Python 3.12 through `asyncio.run()` where asynchronous work is required.
+- Commands execute under Java 21. Outbound work uses `HttpClient.sendAsync` and
+  `CompletableFuture` composition.
 
 ## Exit codes
 
@@ -20,7 +21,7 @@
 ## `list-scenarios`
 
 ```text
-python -m distributed_http_aggregator list-scenarios
+java -jar target/distributed-http-aggregator.jar list-scenarios
 ```
 
 Prints stable scenario names and brief descriptions. Required names are `normal`, `http-500`,
@@ -29,7 +30,7 @@ Prints stable scenario names and brief descriptions. Required names are `normal`
 ## `demo`
 
 ```text
-python -m distributed_http_aggregator demo --scenario <name> [--output <report.json>]
+java -jar target/distributed-http-aggregator.jar demo --scenario <name> [--output <report.json>]
 ```
 
 Starts the scenario's independent loopback workers, waits for readiness, performs one aggregation,
@@ -40,7 +41,7 @@ the JSON report is stdout.
 ## `aggregate`
 
 ```text
-python -m distributed_http_aggregator aggregate --config <run.json> [--output <report.json>]
+java -jar target/distributed-http-aggregator.jar aggregate --config <run.json> [--output <report.json>]
 ```
 
 Loads the published run-configuration contract, validates every field before network I/O, contacts
@@ -68,7 +69,7 @@ fields `field`, `code`, and `message`; additional fields are not permitted.
 ## `worker`
 
 ```text
-python -m distributed_http_aggregator worker --id <id> --host 127.0.0.1 --port <port> --delay-ms <n> --behavior <success|http-500|malformed> [--data-json <json>]
+java -jar target/distributed-http-aggregator.jar worker --id <id> --host 127.0.0.1 --port <port> --delay-ms <n> --behavior <success|http-500|malformed> [--data-json <json>]
 ```
 
 Starts one standalone local worker. `--port 0` requests an OS-assigned port and prints one readiness

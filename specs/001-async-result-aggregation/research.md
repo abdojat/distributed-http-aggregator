@@ -1,180 +1,121 @@
-# Phase 0 Research: Asynchronous HTTP Client & Result Aggregator
+# Phase 0 Research: Java Migration
 
 ## Scope and Resolution
 
-All technical-context questions are resolved. Research used the constitution-approved stack and
-official project or Python documentation. No additional runtime or test dependency is justified.
+All technical questions for the mandatory Java migration are resolved. The behavioral specification
+is unchanged. These decisions replace the Python implementation strategy while retaining the JSON
+and HTTP contracts.
 
-## Decision 1: Structured concurrency with one task per worker
+## Decision 1: Java 21 and Maven
 
-**Decision**: Use `asyncio.TaskGroup`. Create tasks in configured worker order. Each task converts
-anticipated remote failures into a `WorkerOutcome`; unexpected defects remain exceptional and cause
-TaskGroup to cancel and await siblings.
+**Decision**: Compile and run exclusively on Java 21 with Apache Maven and conventional Maven source
+layout. Pin compatible Jetty, Jackson, JUnit, and plugin versions in `pom.xml`.
 
-**Rationale**: TaskGroup provides stronger cleanup guarantees than unstructured tasks. Reading task
-results in creation order supplies deterministic output without shared-list mutation.
+**Rationale**: This directly satisfies the university mandate and yields a reproducible workflow.
 
-**Alternatives considered**:
+**Alternatives considered**: Gradle is excluded by mandate. A multi-module layout is unnecessary.
 
-- `asyncio.gather`: preserves input order but does not cancel siblings when one child raises an
-  unexpected exception.
-- Completion-order collection: useful for streaming but conflicts with deterministic configured
-  order and introduces shared-state synchronization.
+## Decision 2: `HttpClient.sendAsync` plus `CompletableFuture`
 
-**Sources**: [Python Task Groups](https://docs.python.org/3.12/library/asyncio-task.html#task-groups),
-[Python gather](https://docs.python.org/3.12/library/asyncio-task.html#asyncio.gather)
+**Decision**: Reuse one Java `HttpClient`. Start each request with `sendAsync` and compose response
+parsing, validation, timeout, and mapping as a `CompletableFuture<WorkerOutcome>`.
 
-## Decision 2: One scoped asynchronous HTTP client per run
+**Rationale**: The Java 21 client supplies non-blocking HTTP and integrates with the mandated future.
 
-**Decision**: Create one `httpx.AsyncClient` with `async with`, reuse it for every worker task, and
-configure connection limits at or above the validated concurrency limit.
+**Alternatives considered**: Synchronous `send`, third-party clients, and virtual-thread blocking
+calls do not satisfy the explicit requirement.
 
-**Rationale**: This enables connection pooling, centralizes resource ownership, and guarantees client
-closure after success, failure, or cancellation.
+## Decision 3: Ordered handles and `CompletableFuture.allOf`
 
-**Alternatives considered**:
+**Decision**: Store futures in configured order, compose one `allOf` barrier, then read only
+completed results in original order and derive successful data.
 
-- One client per request: wastes connection pools and complicates cleanup.
-- Global process-wide client: obscures ownership and can leak across tests or event loops.
+**Rationale**: Completion timing cannot alter ordering; no shared result list is required.
 
-**Source**: [HTTPX async support](https://www.python-httpx.org/async/)
+**Alternatives considered**: Completion-order queues conflict with FR-016; sequential chaining
+violates FR-004 and SC-004.
 
-## Decision 3: Independent end-to-end deadlines
+## Decision 4: Bounded executor and independent deadlines
 
-**Decision**: Wrap each complete worker operation in `asyncio.timeout()` and also use finite
-`httpx.Timeout` values for connect, read, write, and pool phases. Map both timeout families to the
-same stable `timeout` outcome.
+**Decision**: Give `HttpClient` a dedicated bounded executor sized to the validated concurrency
+limit. Apply an independent whole-operation timeout per pipeline and cancel unfinished work.
 
-**Rationale**: Transport timeouts bound individual I/O phases; the outer deadline bounds the complete
-operation including connection-pool wait, body read, parsing, and contract validation.
+**Rationale**: The bound is testable and each request has an independent terminal deadline.
 
-**Alternatives considered**:
+**Alternatives considered**: The common pool obscures ownership; one run-wide timeout is inadequate.
 
-- HTTP transport timeout only: does not express one hard whole-operation deadline as clearly.
-- Outer timeout only: loses phase-specific protection and diagnostics from the HTTP client.
+## Decision 5: Explicit Java exception mapping
 
-**Sources**: [HTTPX timeouts](https://www.python-httpx.org/advanced/timeouts/),
-[Python timeout contexts](https://docs.python.org/3.12/library/asyncio-task.html#timeouts)
+**Decision**: Map known HTTP, connect, timeout, protocol/I/O, Jackson parsing, shape, and identity
+failures to the published closed outcome set. Unexpected programming defects remain exceptional.
 
-## Decision 4: Explicit exception-to-outcome mapping
+**Rationale**: Distributed failures become data without concealing implementation faults.
 
-**Decision**: Map HTTP status errors, connection/protocol failures, timeout exceptions, and
-response-contract failures to immutable domain outcomes. Do not suppress `CancelledError`; clean up
-and propagate cancellation. Unexpected programming exceptions remain visible.
+**Alternatives considered**: Catch-all recovery misclassifies defects; uncaught remote exceptions
+discard partial results.
 
-**Rationale**: Expected distributed failures become report data and cannot cancel healthy siblings,
-while implementation defects are not misreported as remote failures.
+## Decision 6: Embedded Jetty 12 workers
 
-**Alternatives considered**:
+**Decision**: Run one independent embedded Jetty 12 server per worker on loopback. Use asynchronous
+response handling with scheduled completion for configured delays.
 
-- Catching `Exception` and emitting a generic failure: conceals defects and weakens diagnostics.
-- Allowing all transport exceptions to escape: causes fail-fast loss of partial results.
+**Rationale**: Jetty suits embedded Java 21 HTTP and offers explicit lifecycle control.
 
-**Sources**: [HTTPX exception hierarchy](https://www.python-httpx.org/exceptions/),
-[Python task cancellation](https://docs.python.org/3.12/library/asyncio-task.html#task-cancellation)
+**Alternatives considered**: Spring Boot is excessive. The JDK server is not the selected mandatory
+server library.
 
-## Decision 5: Validate worker JSON with standard-library logic
+## Decision 7: Jackson 2.x and unchanged JSON contracts
 
-**Decision**: Check status before parsing success data, parse JSON, require an object with
-`worker_id` and `data`, and verify the returned identity matches the configured worker. Permit
-`data: null`.
+**Decision**: Use Jackson for strict UTF-8 input and report output. Reject unknown configuration
+fields, retain snake_case names, and keep both JSON Schemas unchanged unless Java verification
+reveals a genuine behavioral conflict.
 
-**Rationale**: JSON parsing validates syntax, not contract shape. The small fixed contract does not
-justify a schema-validation runtime dependency.
+**Rationale**: The schemas are technology-independent and already cover required behavior.
 
-**Alternatives considered**:
+**Alternatives considered**: Manual parsing is error-prone; Gson is less direct for strict records.
 
-- Pydantic or a JSON Schema validator: capable but adds an unjustified third-party dependency.
-- Accepting arbitrary JSON: cannot identify malformed or misassociated responses reliably.
+## Decision 8: Java records and closed enums
 
-**Sources**: [HTTPX JSON responses](https://www.python-httpx.org/quickstart/#json-response-content),
-[HTTPX status handling](https://www.python-httpx.org/quickstart/#response-status-codes)
+**Decision**: Model immutable entities as Java records and closed enums. Validate local invariants
+at construction and cross-record invariants in aggregates.
 
-## Decision 6: Independent lifecycle-managed worker sites
+**Rationale**: Value semantics prevent aliasing and cross-run stale state.
 
-**Decision**: Represent each worker as its own `aiohttp.web.Application`, `AppRunner`, and `TCPSite`
-bound to `127.0.0.1`. Use `GET /work`, non-blocking `asyncio.sleep()` delays, JSON responses, and an
-async context manager that always invokes runner cleanup.
+**Alternatives considered**: Mutable beans increase synchronization risk.
 
-**Rationale**: Independent sites provide real HTTP boundaries and independent behavior without
-platform-specific process supervision. Explicit lifecycle ownership prevents socket leaks.
+## Decision 9: Monotonic timing
 
-**Alternatives considered**:
+**Decision**: Measure elapsed durations with `System.nanoTime()` and convert deltas to milliseconds.
 
-- `web.run_app()` for all workers: takes over the event loop and does not compose cleanly with the
-  client and multiple sites.
-- Mandatory OS subprocesses: add Windows supervision and readiness complexity without improving
-  the required HTTP isolation. Standalone worker commands still permit a process-per-worker demo.
+**Rationale**: Monotonic elapsed measurement is unaffected by wall-clock adjustment.
 
-**Sources**: [aiohttp web reference](https://docs.aiohttp.org/en/stable/web_reference.html),
-[aiohttp web quickstart](https://docs.aiohttp.org/en/stable/web_quickstart.html)
+**Alternatives considered**: `Instant.now()` is intended for timestamps.
 
-## Decision 7: OS-assigned loopback ports
+## Decision 10: JUnit 5 controlled tests
 
-**Decision**: Bind test and default-demo sites to port `0`, then read their assigned addresses after
-startup. Bind the address explicitly to `127.0.0.1`.
+**Decision**: Use JUnit 5 for unit, loopback integration, repeated reliability, and controlled
+performance tests. Tests own every server and executor. Preserve the tolerance
+`max(150 ms, 25% of the longest configured delay or timeout)`.
 
-**Rationale**: This avoids fixed-port conflicts, port pre-probe races, IPv4/IPv6 ambiguity, and
-Windows `TIME_WAIT` failures during repeated tests.
+**Rationale**: JUnit 5 is mandatory and supports deterministic parameterized/repeated tests.
 
-**Alternatives considered**:
+**Alternatives considered**: Mock-only testing cannot prove concurrency and lifecycle behavior.
 
-- Fixed ports: simple for manual standalone commands but fragile for automated or parallel runs.
-- Preselecting a free port: contains a time-of-check/time-of-use race.
+## Decision 11: CLI without another runtime framework
 
-**Sources**: [aiohttp testing utilities](https://docs.aiohttp.org/en/stable/testing.html),
-[Python socket documentation](https://docs.python.org/3.12/library/socket.html)
+**Decision**: Implement the four documented commands with a small explicit parser and package an
+executable JAR. Preserve stdout/stderr separation and exit codes.
 
-## Decision 8: Monotonic high-resolution duration measurement
+**Rationale**: The command surface is fixed and small.
 
-**Decision**: Use `time.perf_counter_ns()` at the worker-operation and whole-run boundaries. Store
-elapsed durations, not wall-clock timestamps, and convert to milliseconds for reports.
+**Alternatives considered**: A CLI framework adds no essential behavior here.
 
-**Rationale**: The counter is monotonic and high resolution on Python 3.12, including on Windows;
-wall-clock adjustment cannot create negative or discontinuous durations.
+## Decision 12: Python evidence is historical only
 
-**Alternatives considered**:
+**Decision**: Preserve Python source and verification, exclude them from Maven, and mark every
+Python result as non-transferable. Reset all Java implementation and verification tasks.
 
-- `time.time()`: can change due to clock synchronization.
-- Worker-reported durations: cannot measure client-observed network and parsing time.
+**Rationale**: The prototype remains useful for comparison but cannot satisfy Java-only submission.
 
-**Source**: [Python time documentation](https://docs.python.org/3.12/library/time.html#time.perf_counter_ns)
-
-## Decision 9: Isolated asynchronous tests and deliberate timing margins
-
-**Decision**: Configure `pytest-asyncio` auto mode and explicit function-scoped test/fixture loops.
-Use async-generator fixtures, controlled local services, relational timing assertions, a shared
-documented tolerance helper, and separate correctness from performance tests.
-
-**Rationale**: Function isolation and guaranteed teardown prevent state leakage. Relational
-assertions with deliberately separated expected durations prove concurrency without relying on
-exact scheduler timing.
-
-**Alternatives considered**:
-
-- Session-scoped servers: faster but increase state and event-loop coupling.
-- Exact-duration assertions: brittle on Windows and loaded development machines.
-- Adding `pytest-aiohttp`: convenient but unnecessary because project fixtures can manage runners.
-
-**Sources**: [pytest-asyncio concepts](https://pytest-asyncio.readthedocs.io/en/stable/concepts.html),
-[pytest-asyncio configuration](https://pytest-asyncio.readthedocs.io/en/stable/reference/configuration.html),
-[pytest flaky-test guidance](https://docs.pytest.org/en/stable/explanation/flaky.html)
-
-## Decision 10: Windows-native execution and packaging
-
-**Decision**: Use `asyncio.run()` for CLI entry points, the default Python 3.12 Windows event-loop
-implementation, standard `venv`, and an installable `pyproject.toml`. Document both activation and
-direct-interpreter PowerShell commands.
-
-**Rationale**: Standard runners own loop shutdown and Ctrl+C handling. Direct interpreter commands
-work even where PowerShell activation scripts are restricted.
-
-**Alternatives considered**:
-
-- Manual loop-policy replacement or Unix signal handlers: platform-specific and unnecessary.
-- Ad-hoc `PYTHONPATH` execution: less reproducible than an editable package installation.
-
-**Sources**: [Python asyncio runners](https://docs.python.org/3.12/library/asyncio-runner.html),
-[Python platform support](https://docs.python.org/3.12/library/asyncio-platforms.html),
-[Python venv](https://docs.python.org/3.12/library/venv.html),
-[Python packaging guide](https://packaging.python.org/en/latest/tutorials/installing-packages/)
+**Alternatives considered**: Deleting or rewriting Python artifacts would lose evidence and violate
+the migration request.

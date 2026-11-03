@@ -1,172 +1,115 @@
 # Quickstart and Validation Guide
 
-This guide describes the intended local workflow after implementation. It validates the contracts
-and acceptance scenarios; it does not contain implementation code.
+This guide describes the planned Java 21 implementation. Until the Java tasks are implemented,
+commands below are expected to fail because no Java application exists yet. The Python prototype is
+intentionally retained but is not valid evidence for this guide.
 
 ## Prerequisites
 
-- Windows 10 or 11 with PowerShell
-- Python 3.12 available through the Python launcher (`py -3.12`) or `python`
-- No public network services are required after dependencies are installed
+- Java Development Kit 21 (`java -version` and `javac -version`)
+- Apache Maven 3.9+ (`mvn -version`) or the Maven Wrapper once created
+- Windows PowerShell from the repository root
+- Loopback ports available for OS assignment
 
-## Environment Setup
-
-From the repository root:
-
-```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e ".[test]"
-```
-
-If PowerShell execution policy prevents activation, call the environment interpreter directly:
+## Build and Automated Validation
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -e ".[test]"
-.\.venv\Scripts\python.exe -m pytest
+java -version
+mvn -version
+mvn clean verify
 ```
 
-The planned runtime dependencies are `httpx` and `aiohttp`; test dependencies are `pytest` and
-`pytest-asyncio`. Any additional dependency requires a documented constitution justification.
+Expected after implementation: Maven compiles with release 21, JUnit 5 unit/integration/performance
+checks pass, and an executable JAR is created under `target/`. Timing-sensitive tests must not run
+in parallel with other performance workloads.
 
-## Run Automated Validation
+To run groups during development:
 
 ```powershell
-python -m pytest
+mvn -Dtest='**/unit/**' test
+mvn -Dtest='**/integration/**' test
+mvn -Dtest='**/performance/**' test
 ```
-
-Focused groups:
-
-```powershell
-python -m pytest tests/unit
-python -m pytest tests/integration
-python -m pytest tests/performance -v
-```
-
-Expected results:
-
-- Unit tests validate configuration, immutable models, serialization, ordered assembly, and error
-  mapping.
-- Integration tests use three to five local loopback workers and cover all required failure modes.
-- The simultaneous-completion test performs at least 20 aggregation runs with exact association and
-  ordering checks.
-- The performance test prints measured concurrent and sequential durations when an assertion fails
-  and proves the concurrent result meets SC-004.
-- No test requires a public endpoint or leaves an owned client, task, or server socket open.
-
-Do not run the timing-sensitive performance test through a process-parallel pytest plugin.
 
 ## Inspect Available Demonstrations
 
 ```powershell
-python -m distributed_http_aggregator list-scenarios
+java -jar target/distributed-http-aggregator.jar list-scenarios
 ```
 
-Expected scenario names: `normal`, `http-500`, `unavailable`, `timeout`, `simultaneous`,
+Expected names: `normal`, `http-500`, `unavailable`, `timeout`, `simultaneous`,
 `partial-failure`, and `all-fail`.
 
 ## Validate Required Scenarios
 
-### All workers succeed with different delays
-
 ```powershell
-python -m distributed_http_aggregator demo --scenario normal
+java -jar target/distributed-http-aggregator.jar demo --scenario normal
+java -jar target/distributed-http-aggregator.jar demo --scenario http-500
+java -jar target/distributed-http-aggregator.jar demo --scenario unavailable
+java -jar target/distributed-http-aggregator.jar demo --scenario timeout
+java -jar target/distributed-http-aggregator.jar demo --scenario simultaneous
+java -jar target/distributed-http-aggregator.jar demo --scenario partial-failure
+java -jar target/distributed-http-aggregator.jar demo --scenario all-fail
 ```
 
-Expected: one success per worker in configured order, all successful data represented once, and
-total duration near the longest delay rather than the sum.
+Expected behavior, in order:
 
-### One worker returns HTTP 500
+- `normal`: all workers succeed in configured order; total duration is near the longest delay.
+- `http-500`: one `http_error` with status 500; successful data remains.
+- `unavailable`: one `connection_failure`; successful siblings remain.
+- `timeout`: one independent `timeout` near its configured boundary.
+- `simultaneous`: every worker appears exactly once with correct association and order.
+- `partial-failure`: successes remain and each failure has its own status, duration, and reason.
+- `all-fail`: exit 0 with a complete report, empty data, and one failure per worker.
 
-```powershell
-python -m distributed_http_aggregator demo --scenario http-500
-```
-
-Expected: the selected worker has status `http_error` and HTTP status 500; all other successful data
-remains in `aggregated_data`.
-
-### One worker is unavailable
+Run invalid configuration validation:
 
 ```powershell
-python -m distributed_http_aggregator demo --scenario unavailable
+java -jar target/distributed-http-aggregator.jar aggregate --config examples\invalid-run.json
 ```
 
-Expected: one `connection_failure`, successful siblings retained, and a complete report.
-
-### One worker exceeds its timeout
-
-```powershell
-python -m distributed_http_aggregator demo --scenario timeout
-```
-
-Expected: one `timeout` near its configured boundary; faster siblings complete normally.
-
-### Multiple workers complete simultaneously
-
-```powershell
-python -m distributed_http_aggregator demo --scenario simultaneous
-```
-
-Expected: each worker appears exactly once, data associations are correct, and output follows
-configured order rather than completion order.
-
-### Some workers fail while others succeed
-
-```powershell
-python -m distributed_http_aggregator demo --scenario partial-failure
-```
-
-Expected: successful data is retained and every failed worker has its own status, duration, and
-reason.
-
-### All workers fail or time out
-
-```powershell
-python -m distributed_http_aggregator demo --scenario all-fail
-```
-
-Expected: exit code 0 with a complete report, empty `aggregated_data`, and one failure outcome per
-worker.
-
-### Invalid configuration
-
-```powershell
-python -m distributed_http_aggregator aggregate --config examples\invalid-run.json
-```
-
-Expected: exit code 2, all detectable field errors on stderr, no report on stdout, and no request
-attempted.
+Expected: exit 2, all detectable field errors on stderr, empty stdout, and no request attempt.
 
 ## Write and Inspect a Report
 
 ```powershell
-python -m distributed_http_aggregator demo --scenario partial-failure --output report.json
+java -jar target/distributed-http-aggregator.jar demo --scenario partial-failure --output report.json
 Get-Content .\report.json
 ```
 
-Compare the result with
-[aggregation-report.schema.json](contracts/aggregation-report.schema.json). It must show total
-duration, ordered worker outcomes, successful data with source identities, and failure details.
+Compare with [aggregation-report.schema.json](contracts/aggregation-report.schema.json). The report
+must contain total duration, ordered worker outcomes, source-associated successful data, and failure
+details.
 
 ## Run Standalone Workers
 
 Open three PowerShell windows and choose distinct ports:
 
 ```powershell
-python -m distributed_http_aggregator worker --id worker-a --host 127.0.0.1 --port 8101 --delay-ms 150 --behavior success --data-json '{"value":1}'
+java -jar target/distributed-http-aggregator.jar worker --id worker-a --host 127.0.0.1 --port 8101 --delay-ms 150 --behavior success --data-json '{"value":1}'
 ```
 
-Repeat for `worker-b` and `worker-c` with ports 8102 and 8103. In another window, create a run file
-that follows [run-configuration.schema.json](contracts/run-configuration.schema.json), then run:
+Repeat for `worker-b` and `worker-c` with ports 8102 and 8103. In another window:
 
 ```powershell
-python -m distributed_http_aggregator aggregate --config .\examples\run-normal.json
+java -jar target/distributed-http-aggregator.jar aggregate --config .\examples\run-normal.json
 ```
 
-Press Ctrl+C in each worker window. Each worker must close its HTTP runner before exiting. Use the
-single-command `demo` flow for routine grading because it avoids fixed-port conflicts and performs
-automatic cleanup.
+Ctrl+C must stop Jetty and owned executors before exit. Prefer `demo` for grading because it uses
+OS-assigned ports and automatic cleanup.
+
+## Java Verification Record
+
+After implementation, append to `verification.md`:
+
+- exact `java` and Maven versions;
+- pinned Jetty, Jackson, JUnit, and Maven plugin versions;
+- `mvn clean verify` result and test counts;
+- 20-run simultaneous-completion result;
+- concurrent, sequential, timeout, and tolerance measurements;
+- lifecycle/cleanup evidence and FR/SC audit.
+
+Do not count the preserved Python batches as Java verification.
 
 ## Contract References
 

@@ -1,6 +1,6 @@
 # Feature Specification: Asynchronous HTTP Client & Result Aggregator
 
-**Feature Branch**: `master`
+**Feature Branch**: `001-async-result-aggregation`
 
 **Created**: 2026-11-03
 
@@ -231,5 +231,5 @@ for both cases.
   access, authentication, persistent storage, or user accounts.
 - Presentation format and invocation interface are outside this feature's functional scope; the
   structured report and validation information must remain independently inspectable.
-- Technology choices and automated test tooling are governed by constitution v1.1.0 and will be
+- Technology choices and automated test tooling are governed by constitution v2.0.0 and will be
   applied during planning without being prescribed in this functional specification.
