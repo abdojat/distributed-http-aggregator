@@ -115,15 +115,15 @@ returns exit 2, every field error, empty stdout, and zero request attempts.
 - [x] T040 [US3] Define deterministic `all-fail` composition in `src/main/java/edu/university/aggregator/scenario/ScenarioCatalog.java` (depends on T031–T033, T037; FR-020).
 - [x] T041 [US3] Implement `aggregate --config`, strict JSON loading, collect-all rejection, all-fail dispatch, routing, and exit codes in `src/main/java/edu/university/aggregator/cli/AggregatorCli.java` (depends on T038–T040; FR-021, FR-022).
 - [x] T042 [US3] Create contract-valid `examples/run-normal.json`, `examples/run-partial-failure.json`, `examples/run-standalone.json`, and multi-error `examples/invalid-run.json` (depends on T041; SC-007, SC-008).
-- [ ] T043 [US3] Run Java US3 tests and append total-failure, exit-code, no-I/O-on-rejection, and report evidence to `specs/001-async-result-aggregation/verification.md` (depends on T037–T042; SC-006, SC-007, SC-009).
+- [x] T043 [US3] Run Java US3 tests and append total-failure, exit-code, no-I/O-on-rejection, and report evidence to `specs/001-async-result-aggregation/verification.md` (depends on T037–T042; SC-006, SC-007, SC-009).
 
 ## Phase 6: Cross-Story Verification and Documentation
 
-- [ ] T044 [P] Add JSON contract-consistency tests in `src/test/java/edu/university/aggregator/integration/ContractConsistencyTest.java` for every invariant in both schemas.
-- [ ] T045 [P] Add the repeated eight-scenario acceptance matrix in `src/test/java/edu/university/aggregator/integration/AcceptanceScenarioTest.java` (FR-001–FR-024, SC-001–SC-009).
-- [ ] T046 [P] Add repeated lifecycle verification for success, failure, timeout, and cancellation in `src/test/java/edu/university/aggregator/integration/ResourceCleanupTest.java`.
-- [ ] T047 Run `mvnw.cmd clean verify` and append commands, environment, dependency versions, timings, test counts, and failures/passes to `specs/001-async-result-aggregation/verification.md` (depends on T044–T046).
-- [ ] T048 Audit FR-001–FR-024 and SC-001–SC-009 against Java source and named JUnit tests in `specs/001-async-result-aggregation/verification.md` (depends on T047).
+- [x] T044 [P] Add JSON contract-consistency tests in `src/test/java/edu/university/aggregator/integration/ContractConsistencyTest.java` for every invariant in both schemas.
+- [x] T045 [P] Add the repeated eight-scenario acceptance matrix in `src/test/java/edu/university/aggregator/integration/AcceptanceScenarioTest.java` (FR-001–FR-024, SC-001–SC-009).
+- [x] T046 [P] Add repeated lifecycle verification for success, failure, timeout, and cancellation in `src/test/java/edu/university/aggregator/integration/ResourceCleanupTest.java`.
+- [x] T047 Run `mvnw.cmd clean verify` and append commands, environment, dependency versions, timings, test counts, and failures/passes to `specs/001-async-result-aggregation/verification.md` (depends on T044–T046).
+- [x] T048 Audit FR-001–FR-024 and SC-001–SC-009 against Java source and named JUnit tests in `specs/001-async-result-aggregation/verification.md` (depends on T047).
 - [ ] T049 Audit `pom.xml` for Java 21 and constitution-approved dependencies, then record dependency-tree and executable-JAR smoke evidence in `specs/001-async-result-aggregation/verification.md` (depends on T001–T048).
 - [ ] T050 [P] Rewrite `README.md` for Java 21/Maven setup, architecture, commands, scenarios, output, and contract links while preserving a clearly labeled Python-prototype history note.
 - [ ] T051 Execute every command in `specs/001-async-result-aggregation/quickstart.md` and append reproducibility evidence to `specs/001-async-result-aggregation/verification.md` (depends on T047, T050).

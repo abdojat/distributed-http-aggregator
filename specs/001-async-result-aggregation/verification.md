@@ -308,3 +308,84 @@
 - HTTP-error, connection-failure, malformed-response, timeout-outcome, partial-result cancellation,
   and User Story 2/3 scenario behavior remain intentionally deferred to T023 and later.
 - Remaining blockers: none for the User Story 1 checkpoint.
+
+## Java 21 Verification — T043–T048 Cross-Story System Verification
+
+**Date**: 2026-11-03  
+**Environment**: Windows 11 PowerShell, Eclipse Temurin OpenJDK 21.0.11, Maven Wrapper
+3.3.4 provisioning Apache Maven 3.9.9
+
+### T043–T046 automated evidence
+
+- T043 command: `.\mvnw.cmd "-Dtest=CompleteFailureTest,InvalidConfigurationTest,CliTest,FailureIsolationTest,TimeoutTest" test`
+  - PASS — 10 tests, 0 failures, 0 errors, 0 skipped.
+  - Complete remote failure produced five terminal outcomes, zero aggregated items, and exit 0.
+  - Invalid configuration produced structured stderr, exit 2, empty stdout, and zero request starts.
+- T044 added `ContractConsistencyTest`:
+  - PASS — 4 tests. Run-configuration required fields, snake_case names, unknown-field rejection,
+    validation envelope ordering, outcome success/failure invariants, report cardinality, configured
+    ordering, and derived aggregated data were checked. Existing `ModelTest` and `JsonCodecTest`
+    cover the remaining record, enum, null-data, duration, and strict JSON invariants.
+- T045 added `AcceptanceScenarioTest`:
+  - PASS — 9 tests (seven remote scenarios plus two invalid-configuration matrix cases).
+  - Acceptance scenarios passed: normal successful aggregation, HTTP 500, unavailable worker,
+    request timeout, simultaneous completions, partial failures, complete failures, and invalid
+    configurations.
+- T046 added `ResourceCleanupTest`:
+  - PASS — 2 tests. Repeated successful, mixed-failure, timeout, and three cancellation runs
+    completed with terminal outcomes; all owned worker servers reported stopped after cleanup.
+    Existing `CancellationCleanupTest` independently verifies prompt cancellation and fleet cleanup.
+
+### Complete JUnit and performance results
+
+- Command: `.\mvnw.cmd test`
+  - PASS — 51 tests, 51 passed, 0 failed, 0 errors, 0 skipped.
+  - Unit, integration, and performance test classes all ran.
+  - `RELIABILITY_METRICS runs=20 passed=20 failures=0`.
+  - `PERF_METRICS concurrent_seconds=0.471318 sequential_seconds=0.943178 speedup=2.001`.
+- Command: `.\mvnw.cmd clean verify`
+  - PASS — 51 tests, 51 passed, 0 failed, 0 errors, 0 skipped; executable shaded JAR created.
+  - Performance metrics during this clean run:
+    `concurrent_seconds=0.462817`, `sequential_seconds=0.949622`, `speedup=2.052`.
+  - Reliability during this clean run: 20/20 passed, 0 failures.
+  - Shade emitted known duplicate metadata/module-descriptor warnings only; no build failure.
+
+### Build, dependency, installation, and executable-JAR smoke checks
+
+- `java -version`: Eclipse Temurin 21.0.11 LTS.
+- `.\mvnw.cmd -version`: Apache Maven 3.9.9 on Java 21.
+- `.\mvnw.cmd dependency:tree -DoutputType=text`: PASS; dependency set is the pinned Jetty
+  12.0.29, Jackson 2.18.3, JUnit Jupiter 5.11.4 test dependency, and their approved transitive
+  runtime dependencies; no additional direct dependency was introduced.
+- `.\mvnw.cmd install -DskipTests`: PASS; POM and executable JAR installed in the local Maven
+  repository.
+- `java -jar target\distributed-http-aggregator.jar list-scenarios`: PASS, exit 0, JSON-only
+  output listing all seven documented scenarios.
+- `java -jar target\distributed-http-aggregator.jar demo --scenario normal`: PASS, exit 0;
+  smoke report had `complete=true`, 3 outcomes, and 3 aggregated data items.
+
+### FR/SC traceability audit (T048)
+
+| Requirements | Java source and passing tests | Result |
+|---|---|---|
+| FR-001–FR-002 | `RunConfigurationValidator`, `ScenarioCatalog`; `RunConfigurationValidatorTest`, `InvalidConfigurationTest`, `AcceptanceScenarioTest` | PASS |
+| FR-003 | `WorkerServer`, `WorkerFleet`, `ScenarioCatalog`; `WorkerContractTest`, `AcceptanceScenarioTest` | PASS |
+| FR-004–FR-005 | `AggregationService`, `WorkerHttpClient`; `ConcurrentAggregationTest`, `ConcurrentPerformanceTest` | PASS |
+| FR-006–FR-007 | `WorkerHttpClient`, `AggregationService`; `WorkerHttpClientTest`, `TimeoutTest`, `AcceptanceScenarioTest` | PASS |
+| FR-008–FR-011 | `WorkerOutcome`, `WorkerHttpClient`; `WorkerHttpClientTest`, `FailureIsolationTest`, `CompleteFailureTest` | PASS |
+| FR-012–FR-017 | model records, `JsonCodec`, `AggregationService`; `ModelTest`, `JsonCodecTest`, `ContractConsistencyTest`, `ConcurrentAggregationTest` | PASS |
+| FR-018–FR-019 | `AggregationReport`, `AggregationService`; `ConcurrentPerformanceTest`, `CompleteFailureTest`, `AcceptanceScenarioTest` | PASS |
+| FR-020 | `ScenarioCatalog`; `SimultaneousCompletionTest`, `AcceptanceScenarioTest`, `CliTest` | PASS |
+| FR-021–FR-022 | `RunConfigurationValidator`, `AggregatorCli`; `RunConfigurationValidatorTest`, `InvalidConfigurationTest`, `CliTest` | PASS |
+| FR-023 | `WorkerHttpClient`, `AggregationService`; `DiagnosticRedactionTest` | PASS |
+| FR-024 | `AggregationService`; `CancellationCleanupTest`, `ResourceCleanupTest` | PASS |
+| SC-001–SC-003 | aggregation/model/client implementation; `ConcurrentAggregationTest`, `FailureIsolationTest`, `ContractConsistencyTest` | PASS |
+| SC-004–SC-005 | asynchronous client/service; `ConcurrentPerformanceTest`, `TimeoutTest`, `WorkerHttpClientTest` | PASS |
+| SC-006–SC-007 | all-failure CLI and validator; `CompleteFailureTest`, `InvalidConfigurationTest`, `CliTest` | PASS |
+| SC-008–SC-009 | worker, JSON, CLI; `WorkerContractTest`, `CliTest`, `AcceptanceScenarioTest`, executable smoke checks | PASS |
+
+### T043–T048 checkpoint
+
+T043, T044, T045, T046, T047, and T048 are complete. The final System Verification checkpoint
+for this requested scope is **PASS**. T049–T052 were not started or marked; no final documentation
+tasks were performed. Remaining blockers: none for T043–T048.
