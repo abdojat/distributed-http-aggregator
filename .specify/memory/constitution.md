@@ -1,16 +1,11 @@
 <!--
 Sync Impact Report
-- Version change: unversioned scaffold -> 1.0.0
-- Modified principles:
-  - Placeholder Principle 1 -> I. Non-Blocking Asynchronous Execution
-  - Placeholder Principle 2 -> II. Bounded Concurrency and Resource Safety
-  - Placeholder Principle 3 -> III. Deterministic Result Aggregation
-  - Placeholder Principle 4 -> IV. Failure Isolation and Explicit Resilience
-  - Placeholder Principle 5 -> V. Verification and Observability
-- Added sections:
-  - Assignment Constraints
-  - Development Workflow and Quality Gates
-- Removed sections: none (placeholder sections were concretized)
+- Version change: 1.0.0 -> 1.1.0
+- Modified principles: none
+- Modified sections:
+  - Assignment Constraints (added mandatory technology stack and dependency policy)
+- Added sections: none
+- Removed sections: none
 - Follow-up TODOs: none
 -->
 # Asynchronous HTTP Client & Result Aggregator Constitution
@@ -56,6 +51,15 @@ outcomes. Tests MUST be repeatable and MUST NOT depend on public internet availa
 
 ## Assignment Constraints
 
+- The project MUST use Python 3.12 as its programming language and runtime baseline.
+- Asynchronous concurrency MUST be implemented with `asyncio`.
+- Asynchronous HTTP client operations MUST use `httpx`.
+- Simulated HTTP worker servers MUST use `aiohttp.web`.
+- Automated tests MUST use `pytest`, with `pytest-asyncio` for asynchronous test cases and
+  fixtures.
+- Python standard-library modules MAY be used wherever appropriate.
+- Any additional third-party dependency MUST have a documented justification describing why the
+  approved stack or standard library cannot reasonably satisfy the requirement.
 - The implementation MUST remain focused on an asynchronous HTTP client and result aggregator;
   unrelated infrastructure or features require written justification.
 - Public interfaces and result schemas MUST be documented with their concurrency, ordering,
@@ -101,4 +105,4 @@ accepted, and before submission. Reviewers MUST record any exception under the w
 Complexity that is not required by the assignment or these principles MUST be removed or justified
 in writing.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-03
+**Version**: 1.1.0 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-03
