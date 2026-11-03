@@ -5,6 +5,60 @@
 > implementation. Java completion status was reset in `tasks.md`; new Maven/JUnit evidence must be
 > appended in a separate **Java 21 Verification** section before migrated tasks are completed.
 
+## Java 21 Verification
+
+### Batch: T001–T010 — Setup and Foundation
+
+**Date**: 2026-11-03
+**JDK**: Eclipse Temurin OpenJDK 21.0.11
+**Maven**: Maven Wrapper 3.3.4 provisioning Apache Maven 3.9.9 on Java 21
+**Environment**: Windows 11 PowerShell
+
+#### Pinned build and dependency versions
+
+- Eclipse Jetty `12.0.29`
+- Jackson Databind `2.18.3`
+- JUnit Jupiter `5.11.4`
+- Maven Compiler Plugin `3.13.0`
+- Maven Surefire Plugin `3.5.2`
+- Maven Shade Plugin `3.6.0`
+
+#### Test-first evidence
+
+1. T001–T003 setup checkpoint:
+   - Command: `.\mvnw.cmd -DskipTests package`
+   - Result: PASS — Java 21 compilation and executable-JAR packaging completed.
+2. After authoring T004–T006 and before T007–T010 implementation:
+   - Command: `.\mvnw.cmd -q '-Dtest=ModelTest,RunConfigurationValidatorTest,JsonCodecTest' test`
+   - Result: expected RED — test compilation failed because the planned `model`, `config`, and
+     `json` packages did not exist.
+3. After implementing T007–T010:
+   - Command: `.\mvnw.cmd '-Dtest=ModelTest,RunConfigurationValidatorTest,JsonCodecTest' test`
+   - Result: PASS — 12 tests, 0 failures, 0 errors, 0 skipped at the initial green checkpoint.
+
+#### Foundation checkpoint
+
+- Command: `.\mvnw.cmd clean verify`
+  - Result: PASS — 16 main source files and 3 test source files compiled with Java release 21.
+  - JUnit result: 13 tests, 0 failures, 0 errors, 0 skipped after adding a valid snake_case input
+    round-trip check.
+  - Packaging result: executable shaded `target/distributed-http-aggregator.jar` created.
+- Command: `java -jar target\distributed-http-aggregator.jar`
+  - Result: PASS — import-safe placeholder entry point exited with code 0 and implemented no
+    post-T010 feature behavior.
+- Python preservation audit: PASS — `src/distributed_http_aggregator/`, `tests/`, and
+  `pyproject.toml` have no diff.
+- Task scope audit: PASS — only T001–T010 are marked complete; T011 and all user-story tasks remain
+  incomplete.
+
+#### Limitations
+
+- No HTTP client, `CompletableFuture` aggregation, Jetty worker behavior, scenarios, or CLI commands
+  are implemented in this batch; those begin after T011.
+- Maven Shade reports expected duplicate metadata/module-descriptor warnings while assembling the
+  executable dependency JAR; compilation, tests, packaging, and execution all succeed.
+- Remaining blockers: none for beginning T011, but this requested checkpoint stops at T010.
+
 ## Batch: T001–T010 — Setup and Foundation
 
 **Date**: 2026-11-03

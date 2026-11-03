@@ -16,9 +16,9 @@ historical evidence only in `verification.md` and cannot satisfy any checkbox be
 
 **Purpose**: Establish a reproducible Java-only build without changing or deleting Python files.
 
-- [ ] T001 Create `pom.xml` with Java release 21, pinned Jetty 12 and Jackson 2.x runtime dependencies, pinned JUnit 5 test dependency, Surefire, compiler, and executable-JAR plugins; exclude historical Python paths from the Maven build.
-- [ ] T002 Create Maven Wrapper files `.mvn/wrapper/maven-wrapper.properties`, `mvnw`, and `mvnw.cmd`, then record wrapper and JDK prerequisites in `README.md`.
-- [ ] T003 [P] Create Java package scaffolding and an import-safe entry point in `src/main/java/edu/university/aggregator/Main.java` without implementing feature behavior.
+- [x] T001 Create `pom.xml` with Java release 21, pinned Jetty 12 and Jackson 2.x runtime dependencies, pinned JUnit 5 test dependency, Surefire, compiler, and executable-JAR plugins; exclude historical Python paths from the Maven build.
+- [x] T002 Create Maven Wrapper files `.mvn/wrapper/maven-wrapper.properties`, `mvnw`, and `mvnw.cmd`, then record wrapper and JDK prerequisites in `README.md`.
+- [x] T003 [P] Create Java package scaffolding and an import-safe entry point in `src/main/java/edu/university/aggregator/Main.java` without implementing feature behavior.
 
 **Checkpoint**: `mvnw.cmd -q -DskipTests package` compiles an empty Java 21 application; Python
 source and tests remain byte-for-byte untouched.
@@ -29,16 +29,16 @@ source and tests remain byte-for-byte untouched.
 
 ### Tests first
 
-- [ ] T004 [P] Write failing Java record/enum invariant tests for every entity in `src/test/java/edu/university/aggregator/unit/ModelTest.java`.
-- [ ] T005 [P] Write failing collect-all validation tests for FR-001, FR-002, FR-021, FR-022, and SC-007 in `src/test/java/edu/university/aggregator/unit/RunConfigurationValidatorTest.java`.
-- [ ] T006 [P] Write failing Jackson serialization tests for FR-012–FR-016, SC-001, and SC-009 in `src/test/java/edu/university/aggregator/unit/JsonCodecTest.java`.
+- [x] T004 [P] Write failing Java record/enum invariant tests for every entity in `src/test/java/edu/university/aggregator/unit/ModelTest.java`.
+- [x] T005 [P] Write failing collect-all validation tests for FR-001, FR-002, FR-021, FR-022, and SC-007 in `src/test/java/edu/university/aggregator/unit/RunConfigurationValidatorTest.java`.
+- [x] T006 [P] Write failing Jackson serialization tests for FR-012–FR-016, SC-001, and SC-009 in `src/test/java/edu/university/aggregator/unit/JsonCodecTest.java`.
 
 ### Shared implementation
 
-- [ ] T007 Implement `WorkerBehavior`, `WorkerStatus`, and `FailureCode` closed enums in `src/main/java/edu/university/aggregator/model/` with the exact contract values from `data-model.md`.
-- [ ] T008 Implement immutable configuration and result records in `src/main/java/edu/university/aggregator/model/`, enforcing worker ID “trimmed, non-empty; maximum 64 characters”, credential-free absolute HTTP(S) URL, GET-only method, `timeout_ms > 0`, `delay_ms >= 0`, finite non-negative durations, success/failure field invariants, and configured order (depends on T004, T007; FR-012–FR-016).
-- [ ] T009 Implement strict Jackson parsing/serialization and the exact ordered validation-error envelope in `src/main/java/edu/university/aggregator/json/JsonCodec.java`, rejecting unknown fields and non-finite durations (depends on T006, T008).
-- [ ] T010 Implement stable collect-all preflight validation with no I/O in `src/main/java/edu/university/aggregator/config/RunConfigurationValidator.java` (depends on T005, T008; FR-001, FR-002, FR-021, FR-022, SC-007).
+- [x] T007 Implement `WorkerBehavior`, `WorkerStatus`, and `FailureCode` closed enums in `src/main/java/edu/university/aggregator/model/` with the exact contract values from `data-model.md`.
+- [x] T008 Implement immutable configuration and result records in `src/main/java/edu/university/aggregator/model/`, enforcing worker ID “trimmed, non-empty; maximum 64 characters”, credential-free absolute HTTP(S) URL, GET-only method, `timeout_ms > 0`, `delay_ms >= 0`, finite non-negative durations, success/failure field invariants, and configured order (depends on T004, T007; FR-012–FR-016).
+- [x] T009 Implement strict Jackson parsing/serialization and the exact ordered validation-error envelope in `src/main/java/edu/university/aggregator/json/JsonCodec.java`, rejecting unknown fields and non-finite durations (depends on T006, T008).
+- [x] T010 Implement stable collect-all preflight validation with no I/O in `src/main/java/edu/university/aggregator/config/RunConfigurationValidator.java` (depends on T005, T008; FR-001, FR-002, FR-021, FR-022, SC-007).
 - [ ] T011 [P] Create deterministic sample builders, the tolerance `max(150 ms, 25% of longest delay/timeout)`, and lifecycle assertions in `src/test/java/edu/university/aggregator/TestSupport.java`.
 
 **Checkpoint**: Foundation JUnit tests pass; invalid input reports every detectable field error and
