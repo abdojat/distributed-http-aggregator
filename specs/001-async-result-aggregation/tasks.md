@@ -39,7 +39,7 @@ source and tests remain byte-for-byte untouched.
 - [x] T008 Implement immutable configuration and result records in `src/main/java/edu/university/aggregator/model/`, enforcing worker ID “trimmed, non-empty; maximum 64 characters”, credential-free absolute HTTP(S) URL, GET-only method, `timeout_ms > 0`, `delay_ms >= 0`, finite non-negative durations, success/failure field invariants, and configured order (depends on T004, T007; FR-012–FR-016).
 - [x] T009 Implement strict Jackson parsing/serialization and the exact ordered validation-error envelope in `src/main/java/edu/university/aggregator/json/JsonCodec.java`, rejecting unknown fields and non-finite durations (depends on T006, T008).
 - [x] T010 Implement stable collect-all preflight validation with no I/O in `src/main/java/edu/university/aggregator/config/RunConfigurationValidator.java` (depends on T005, T008; FR-001, FR-002, FR-021, FR-022, SC-007).
-- [ ] T011 [P] Create deterministic sample builders, the tolerance `max(150 ms, 25% of longest delay/timeout)`, and lifecycle assertions in `src/test/java/edu/university/aggregator/TestSupport.java`.
+- [x] T011 [P] Create deterministic sample builders, the tolerance `max(150 ms, 25% of longest delay/timeout)`, and lifecycle assertions in `src/test/java/edu/university/aggregator/TestSupport.java`.
 
 **Checkpoint**: Foundation JUnit tests pass; invalid input reports every detectable field error and
 cannot construct a network-ready run.
@@ -53,20 +53,20 @@ duration is near the longest delay; 20 simultaneous runs preserve exact identity
 
 ### Tests first
 
-- [ ] T012 [P] [US1] Write failing Jetty `GET /work` and `GET /health` tests for success, null data, scheduled delay, OS-assigned ports, and cleanup in `src/test/java/edu/university/aggregator/integration/WorkerContractTest.java` (FR-003, SC-008).
-- [ ] T013 [P] [US1] Write failing successful `sendAsync` client mapping tests in `src/test/java/edu/university/aggregator/unit/WorkerHttpClientTest.java` (FR-005, FR-013, FR-014).
-- [ ] T014 [P] [US1] Write failing real-loopback three/five-worker concurrency, configured-order, association, and duration tests in `src/test/java/edu/university/aggregator/integration/ConcurrentAggregationTest.java` (FR-004, FR-005, FR-012–FR-018, SC-001, SC-003, SC-009).
-- [ ] T015 [P] [US1] Write the failing 0.15/0.30/0.45-second concurrent-versus-sequential test in `src/test/java/edu/university/aggregator/performance/ConcurrentPerformanceTest.java` with all SC-004 thresholds.
-- [ ] T016 [P] [US1] Write a failing 20-run simultaneous-completion test in `src/test/java/edu/university/aggregator/integration/SimultaneousCompletionTest.java` (FR-016, FR-017, FR-020, SC-002).
-- [ ] T017 [P] [US1] Write failing `list-scenarios`, successful `demo`, standalone worker readiness, stream separation, file output, and exit-0 tests in `src/test/java/edu/university/aggregator/integration/CliTest.java` (SC-008, SC-009).
+- [x] T012 [P] [US1] Write failing Jetty `GET /work` and `GET /health` tests for success, null data, scheduled delay, OS-assigned ports, and cleanup in `src/test/java/edu/university/aggregator/integration/WorkerContractTest.java` (FR-003, SC-008).
+- [x] T013 [P] [US1] Write failing successful `sendAsync` client mapping tests in `src/test/java/edu/university/aggregator/unit/WorkerHttpClientTest.java` (FR-005, FR-013, FR-014).
+- [x] T014 [P] [US1] Write failing real-loopback three/five-worker concurrency, configured-order, association, and duration tests in `src/test/java/edu/university/aggregator/integration/ConcurrentAggregationTest.java` (FR-004, FR-005, FR-012–FR-018, SC-001, SC-003, SC-009).
+- [x] T015 [P] [US1] Write the failing 0.15/0.30/0.45-second concurrent-versus-sequential test in `src/test/java/edu/university/aggregator/performance/ConcurrentPerformanceTest.java` with all SC-004 thresholds.
+- [x] T016 [P] [US1] Write a failing 20-run simultaneous-completion test in `src/test/java/edu/university/aggregator/integration/SimultaneousCompletionTest.java` (FR-016, FR-017, FR-020, SC-002).
+- [x] T017 [P] [US1] Write failing `list-scenarios`, successful `demo`, standalone worker readiness, stream separation, file output, and exit-0 tests in `src/test/java/edu/university/aggregator/integration/CliTest.java` (SC-008, SC-009).
 
 ### Implementation
 
-- [ ] T018 [P] [US1] Implement successful/delayed embedded Jetty workers, scheduled non-blocking responses, loopback OS-port discovery, and reverse-order fleet cleanup in `src/main/java/edu/university/aggregator/worker/` (depends on T012; FR-003).
-- [ ] T019 [P] [US1] Implement one worker operation with shared Java 21 `HttpClient`, `sendAsync`, finite connection/whole-operation deadlines, response checks, and `System.nanoTime()` in `src/main/java/edu/university/aggregator/client/WorkerHttpClient.java` (depends on T013; FR-005, FR-006, FR-013, FR-014).
-- [ ] T020 [US1] Implement bounded future orchestration, immediate future creation, `CompletableFuture.allOf`, configured-order collection, derived successful data, and total timing in `src/main/java/edu/university/aggregator/service/AggregationService.java` (depends on T014, T018, T019; FR-004–FR-007, FR-012–FR-019).
-- [ ] T021 [US1] Define deterministic `normal` and `simultaneous` scenarios in `src/main/java/edu/university/aggregator/scenario/ScenarioCatalog.java` (depends on T018, T020; FR-003, FR-020).
-- [ ] T022 [US1] Implement `list-scenarios`, successful `demo`, and standalone `worker` in `src/main/java/edu/university/aggregator/cli/AggregatorCli.java` and delegate from `Main.java` with JSON stdout, diagnostics stderr, output files, and shutdown cleanup (depends on T017–T021).
+- [x] T018 [P] [US1] Implement successful/delayed embedded Jetty workers, scheduled non-blocking responses, loopback OS-port discovery, and reverse-order fleet cleanup in `src/main/java/edu/university/aggregator/worker/` (depends on T012; FR-003).
+- [x] T019 [P] [US1] Implement one worker operation with shared Java 21 `HttpClient`, `sendAsync`, finite connection/whole-operation deadlines, response checks, and `System.nanoTime()` in `src/main/java/edu/university/aggregator/client/WorkerHttpClient.java` (depends on T013; FR-005, FR-006, FR-013, FR-014).
+- [x] T020 [US1] Implement bounded future orchestration, immediate future creation, `CompletableFuture.allOf`, configured-order collection, derived successful data, and total timing in `src/main/java/edu/university/aggregator/service/AggregationService.java` (depends on T014, T018, T019; FR-004–FR-007, FR-012–FR-019).
+- [x] T021 [US1] Define deterministic `normal` and `simultaneous` scenarios in `src/main/java/edu/university/aggregator/scenario/ScenarioCatalog.java` (depends on T018, T020; FR-003, FR-020).
+- [x] T022 [US1] Implement `list-scenarios`, successful `demo`, and standalone `worker` in `src/main/java/edu/university/aggregator/cli/AggregatorCli.java` and delegate from `Main.java` with JSON stdout, diagnostics stderr, output files, and shutdown cleanup (depends on T017–T021).
 - [ ] T023 [US1] Run the Java US1 JUnit groups and append JDK/Maven versions, 20-run results, and measured timings under `Java 21 Verification` in `specs/001-async-result-aggregation/verification.md` (depends on T012–T022; SC-001, SC-002, SC-004, SC-008, SC-009).
 
 **Checkpoint**: US1 is independently demonstrable from the executable JAR with Java-only evidence.

@@ -59,6 +59,59 @@
   executable dependency JAR; compilation, tests, packaging, and execution all succeed.
 - Remaining blockers: none for beginning T011, but this requested checkpoint stops at T010.
 
+### Batch: T011–T022 — Java User Story 1
+
+**Date**: 2026-11-03
+**JDK**: Eclipse Temurin OpenJDK 21.0.11
+**Maven**: Maven Wrapper 3.3.4 provisioning Apache Maven 3.9.9
+
+#### Test-first evidence
+
+1. After authoring T011–T017 and before implementing worker, client, aggregation, scenario, or CLI
+   classes:
+   - Command: `.\mvnw.cmd -q '-Dtest=WorkerContractTest,WorkerHttpClientTest,ConcurrentAggregationTest,ConcurrentPerformanceTest,SimultaneousCompletionTest,CliTest' test`
+   - Result: expected RED — test compilation failed because the planned `worker`, `client`,
+     `service`, and `cli` packages did not exist.
+2. After implementing T018–T022:
+   - Same targeted command result: PASS — 10 tests, 0 failures, 0 errors, 0 skipped.
+
+#### Clean build and JUnit evidence
+
+- Command: `.\mvnw.cmd clean verify`
+- Result: PASS — 24 main source files and 10 test source files compiled with Java release 21.
+- JUnit result: 23 tests, 0 failures, 0 errors, 0 skipped.
+- Packaging result: executable shaded `target/distributed-http-aggregator.jar` created.
+
+#### Reliability and performance evidence
+
+- Simultaneous completion: PASS — all 20 of 20 runs preserved five outcomes, configured worker
+  order, success status, payload association, and fresh aggregate cardinality; 0 failed runs.
+- Controlled delays: 0.150, 0.300, and 0.450 seconds; configured sum 0.900 seconds.
+- Concurrent duration: 0.463021 seconds.
+- Sequential duration: 0.934804 seconds.
+- Calculated speedup: 2.019x.
+- Longest delay plus tolerance: 0.600000 seconds.
+- 75% of configured delay sum: 0.675000 seconds.
+- 75% of measured sequential baseline: 0.701103 seconds.
+- SC-004 result: PASS — concurrent duration satisfied all three bounds.
+
+#### Packaged CLI evidence
+
+- `java -jar target/distributed-http-aggregator.jar list-scenarios`: PASS — JSON-only `normal` and
+  `simultaneous` records, exit code 0, empty stderr.
+- `java -jar target/distributed-http-aggregator.jar demo --scenario normal`: PASS — complete ordered
+  three-worker JSON report, exit code 0, empty stderr.
+- Standalone worker readiness, output-file routing, cleanup, and exit behavior: PASS in `CliTest`.
+
+#### Scope and preservation
+
+- T011–T022 are complete and verified. T023 remains incomplete because this requested scope stops
+  at T022; its required evidence has nevertheless been recorded here at the user's direction.
+- No User Story 2 failure mappings or worker behaviors were implemented.
+- Python preservation audit: `src/distributed_http_aggregator/`, `tests/`, and `pyproject.toml` have
+  no diff.
+- Remaining blockers: none for the User Story 1 checkpoint.
+
 ## Batch: T001–T010 — Setup and Foundation
 
 **Date**: 2026-11-03

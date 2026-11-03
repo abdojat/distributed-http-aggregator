@@ -33,4 +33,8 @@ public final class JsonCodec {
     public String writeValidationErrors(ValidationErrorReport report) throws JsonProcessingException {
         return mapper.writeValueAsString(report);
     }
+
+    public String write(Object value) throws JsonProcessingException {
+        return mapper.writeValueAsString(value);
+    }
 }
