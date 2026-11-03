@@ -115,8 +115,9 @@ for both cases.
 
 - **FR-001**: The system MUST accept configuration for at least three and at most five independent
   workers in a single aggregation run.
-- **FR-002**: Each worker configuration MUST include a unique identity, a request destination, and
-  the values needed to reproduce its simulated delay and behavior.
+- **FR-002**: Each controlled scenario MUST associate a client-side worker configuration containing
+  an identity and request destination with a simulated-worker configuration containing the same
+  identity, delay, and behavior; identities MUST be unique within the run.
 - **FR-003**: Simulated workers MUST support repeatable successful responses, HTTP 500 responses,
   configurable delays, and availability states needed by the acceptance scenarios.
 - **FR-004**: The system MUST begin requests to all configured workers without waiting for any
@@ -128,8 +129,9 @@ for both cases.
   request.
 - **FR-007**: Reaching one worker's timeout MUST end that request promptly without cancelling,
   delaying, or removing outcomes from other workers.
-- **FR-008**: Every configured worker MUST produce exactly one terminal outcome classified as
-  success, HTTP error, unreachable or connection failure, timeout, or invalid response.
+- **FR-008**: Every submitted worker request MUST produce exactly one identifiable terminal outcome
+  classified as success, HTTP error, unreachable or connection failure, timeout, invalid response,
+  or cancelled; `cancelled` applies only when the parent aggregation is cancelled.
 - **FR-009**: An HTTP 500 response MUST be recorded as an HTTP error rather than as successful data,
   and its status code MUST remain available in the worker outcome.
 - **FR-010**: Unreachable destinations and connection failures MUST be captured as worker-level
@@ -192,9 +194,10 @@ for both cases.
   identical to configured worker order.
 - **SC-003**: In mixed success and failure scenarios, 100% of successful worker data is retained and
   100% of failed workers include a failure classification and reason.
-- **SC-004**: For three to five successful workers with distinct delays, measured total duration is
-  no greater than the longest worker duration plus the documented timing tolerance and is less than
-  75% of the sum of worker durations whenever that comparison is mathematically discriminating.
+- **SC-004**: For three to five successful workers with distinct delays, measured concurrent total
+  duration is no greater than the longest worker duration plus the documented timing tolerance and,
+  when the sum of worker durations is at least twice the longest worker duration, is less than 75%
+  of both that sum and a sequential baseline measured against the same workers.
 - **SC-005**: For a worker exceeding its timeout, the worker reaches a timeout outcome within the
   configured timeout plus the documented timing tolerance, while every other worker reaches its
   independently correct outcome.
@@ -202,8 +205,9 @@ for both cases.
   one failure outcome per worker, without an unhandled termination or indefinite wait.
 - **SC-007**: Every listed invalid-configuration class is rejected before any worker is contacted,
   and the resulting feedback identifies all affected fields in one validation attempt.
-- **SC-008**: All eight required acceptance scenarios can be executed repeatedly without reliance on
-  public internet services and yield equivalent status classifications on every repetition.
+- **SC-008**: All eight required acceptance scenarios can each be executed for at least two
+  consecutive runs without reliance on public internet services and yield equivalent worker-status
+  classifications or validation-error code sequences, as applicable, on every repetition.
 - **SC-009**: A reviewer can determine from a single report which workers succeeded, which failed,
   why each failed, how long each took, what successful data was collected, and how long the complete
   run took, without consulting runtime diagnostics.

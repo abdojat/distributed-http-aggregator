@@ -46,5 +46,5 @@
       }
     }
   },
-  "description": "Worker identities must be unique. concurrency_limit must be no greater than the number of workers; these cross-field rules are enforced by aggregate validation."
+  "description": "This client-side contract contains request endpoints only. Controlled scenarios separately associate each entry with a simulated-worker configuration containing the same identity, delay, and behavior. Worker identities must be unique and concurrency_limit must be no greater than the number of workers; these cross-field rules are enforced only by RunConfiguration aggregate validation."
 }

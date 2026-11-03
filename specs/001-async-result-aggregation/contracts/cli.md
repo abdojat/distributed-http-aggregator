@@ -47,6 +47,24 @@ Loads the published run-configuration contract, validates every field before net
 already-running workers, and writes one aggregation report. Validation errors are emitted together
 as structured JSON on stderr and use exit code 2.
 
+The validation-error JSON document has this exact envelope and preserves stable document/field
+order:
+
+```json
+{
+  "errors": [
+    {
+      "field": "workers[1].timeout_ms",
+      "code": "out_of_range",
+      "message": "timeout_ms must be greater than 0"
+    }
+  ]
+}
+```
+
+`errors` is a non-empty array containing every detected error. Each entry has exactly the string
+fields `field`, `code`, and `message`; additional fields are not permitted.
+
 ## `worker`
 
 ```text

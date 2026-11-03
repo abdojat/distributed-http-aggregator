@@ -36,7 +36,8 @@ server components
 
 **Performance Goals**: For three to five workers, concurrent duration is bounded by the longest
 active worker or timeout plus a documented tolerance and, in the controlled benchmark, is less than
-75% of the measured sequential baseline
+75% of both the configured delay sum and the measured sequential baseline when the configured delay
+sum is at least twice the longest delay
 
 **Constraints**: Three to five workers; finite per-request timeout; bounded configurable
 concurrency; deterministic configured-order output; no public internet; no automatic retries;
@@ -208,7 +209,9 @@ the assignment.
 The client accepts only `GET` for this assignment. A successful worker response is a JSON object
 containing `worker_id` and `data`; `data` may be any JSON value including `null`. The returned
 `worker_id` must match the configured identity. Invalid JSON, missing fields, or an identity mismatch
-maps to `INVALID_RESPONSE` and never enters aggregated data.
+maps to `INVALID_RESPONSE` and never enters aggregated data. A successful outcome always preserves
+the observed 2xx HTTP status. Validation failures use the ordered JSON envelope defined in
+[cli.md](contracts/cli.md).
 
 ## Failure-Handling Strategy
 
@@ -272,8 +275,11 @@ report or normal logs.
   client closure, runner cleanup, and no owned pending tasks.
 - **Performance**: Measure concurrent and sequential control runs against the same three workers
   (planned delays 0.15/0.30/0.45 seconds). Assert concurrent time is at most the longest delay plus
-  tolerance and less than 75% of the sequential baseline. Do not run this test under process-parallel
-  test execution.
+  tolerance and less than 75% of both the configured delay sum and sequential baseline. Do not run
+  this test under process-parallel test execution.
+- **Scenario repeatability**: Execute each of the eight required acceptance scenarios for at least
+  two consecutive runs and assert equivalent worker-status classifications or validation-error code
+  sequences, as applicable, on every repetition.
 - **CLI**: Validate commands, JSON stdout, file output, stderr separation, and exit codes in
   PowerShell-compatible subprocess invocations.
 

@@ -34,8 +34,9 @@
 
 ### FailureCode
 
-Stable values include `http_status`, `connect_error`, `network_error`, `remote_protocol_error`,
-`request_timeout`, `invalid_json`, `invalid_shape`, `worker_identity_mismatch`, and `cancelled`.
+The closed set of stable values is `http_status`, `connect_error`, `network_error`,
+`remote_protocol_error`, `request_timeout`, `invalid_json`, `invalid_shape`,
+`worker_identity_mismatch`, and `cancelled`.
 
 ## Entity: WorkerConfiguration
 
@@ -43,13 +44,14 @@ Represents one client-side request target.
 
 | Field | Type | Required | Validation |
 |---|---|---:|---|
-| `worker_id` | string | yes | Trimmed, non-empty, unique within the run; maximum 64 characters |
+| `worker_id` | string | yes | Trimmed, non-empty; maximum 64 characters |
 | `url` | string | yes | Absolute `http` or `https` URL; host required; no embedded credentials |
 | `method` | string | yes | Exactly `GET` for this assignment |
 | `timeout_ms` | integer | yes | Greater than 0; recommended local range 50–30,000 ms |
 
 **Invariant**: A validated worker configuration can be paired with exactly one task and one outcome
-within a run.
+within a run. This isolated record does not enforce cross-worker uniqueness; `RunConfiguration`
+aggregate validation owns that rule.
 
 ## Entity: SimulatedWorkerConfiguration
 
@@ -58,7 +60,7 @@ part of the HTTP request.
 
 | Field | Type | Required | Validation |
 |---|---|---:|---|
-| `worker_id` | string | yes | Same identity rules as `WorkerConfiguration` |
+| `worker_id` | string | yes | Same local identity rules as `WorkerConfiguration`; matched to one client configuration by the scenario |
 | `behavior` | `WorkerBehavior` | yes | One published behavior value |
 | `delay_ms` | integer | yes | Greater than or equal to 0 |
 | `data` | any JSON value | for success | May be `null`; must be JSON serializable |
@@ -89,6 +91,14 @@ client I/O starts until the error list is empty.
 Typical codes: `worker_count`, `required`, `duplicate`, `invalid_url`, `unsupported_method`,
 `out_of_range`, and `invalid_type`.
 
+## Entity: ValidationErrorReport
+
+Represents the JSON document written to stderr when configuration validation fails.
+
+| Field | Type | Required | Rules |
+|---|---|---:|---|
+| `errors` | ordered list of `ValidationError` | yes | Non-empty; stable document/field order; contains all detected errors |
+
 ## Entity: WorkerOutcome
 
 | Field | Type | Required | Rules |
@@ -97,12 +107,12 @@ Typical codes: `worker_count`, `required`, `duplicate`, `invalid_url`, `unsuppor
 | `status` | `WorkerStatus` | yes | Exactly one terminal status |
 | `duration_ms` | number | yes | Finite and non-negative |
 | `data` | any JSON value or null | yes | Successful outcomes preserve returned data, including `null`; unsuccessful outcomes use `null` |
-| `http_status` | integer or null | when known | 100–599; 500 preserved for required scenario |
+| `http_status` | integer or null | yes | Success requires 200–299; failures preserve 100–599 when supplied, otherwise `null` |
 | `failure_code` | string or null | failures only | Stable `FailureCode` value |
 | `failure_reason` | string or null | failures only | Sanitized human-readable summary |
 
-**Success invariant**: `status=success`, failure fields are null, and `data` is present even when its
-value is `null`.
+**Success invariant**: `status=success`, `http_status` is an integer from 200 through 299, failure
+fields are null, and `data` is present even when its value is `null`.
 
 **Failure invariant**: `status!=success`, `data` is `null`, no data enters aggregated data, and
 `failure_code` plus `failure_reason` are present. `http_status` is present only when an HTTP response

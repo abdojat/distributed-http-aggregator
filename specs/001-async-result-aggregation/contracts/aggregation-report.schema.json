@@ -65,7 +65,18 @@
           "maximum": 599
         },
         "failure_code": {
-          "type": ["string", "null"]
+          "enum": [
+            null,
+            "http_status",
+            "connect_error",
+            "network_error",
+            "remote_protocol_error",
+            "request_timeout",
+            "invalid_json",
+            "invalid_shape",
+            "worker_identity_mismatch",
+            "cancelled"
+          ]
         },
         "failure_reason": {
           "type": ["string", "null"]

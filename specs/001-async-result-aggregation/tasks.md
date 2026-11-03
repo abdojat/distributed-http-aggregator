@@ -30,7 +30,7 @@ increments. Cross-story verification and documentation follow the story checkpoi
 dependencies.
 
 - [ ] T001 Create `pyproject.toml` with Python `>=3.12,<3.13`, runtime dependencies `httpx` and `aiohttp`, test extras `pytest` and `pytest-asyncio`, a `src` package layout, and explicit pytest-asyncio auto mode with function-scoped test and fixture loops.
-- [ ] T002 Create the package entry scaffolding in `src/distributed_http_aggregator/__init__.py` and `src/distributed_http_aggregator/__main__.py`, with `__main__.py` delegating to the future CLI entry function and containing no business logic.
+- [ ] T002 Create import-safe package scaffolding in `src/distributed_http_aggregator/__init__.py` and an empty `src/distributed_http_aggregator/__main__.py` that contains no import or entry-point delegation to unavailable components.
 
 **Checkpoint**: `python -m pip install -e ".[test]"` succeeds under Python 3.12 and pytest starts with
 the configured asynchronous test mode, even though feature tests are not implemented yet.
@@ -46,16 +46,16 @@ helpers that block every user story.
 
 ### Tests first
 
-- [ ] T003 [P] Write failing frozen-model and invariant tests for all enums, `WorkerConfiguration`, `SimulatedWorkerConfiguration`, `RunConfiguration`, `ValidationError`, `WorkerOutcome`, `AggregatedDataItem`, `AggregationReport`, and `AggregationCancelled` in `tests/unit/test_models.py`.
-- [ ] T004 [P] Write failing table-driven collect-all validation tests for worker count, identity, URL, GET-only method, positive timeout, and concurrency bounds in `tests/unit/test_validation.py` (FR-001, FR-002, FR-021, FR-022, SC-007).
-- [ ] T005 [P] Write failing JSON serialization tests in `tests/unit/test_serialization.py` that assert the report contract, stable configured order, success data including `null`, unsuccessful `data: null`, finite non-negative durations, and structured validation errors (FR-012–FR-016, SC-001, SC-009).
+- [ ] T003 [P] Write failing frozen-model and invariant tests for all enums, `WorkerConfiguration`, `SimulatedWorkerConfiguration`, `RunConfiguration`, `ValidationError`, `ValidationErrorReport`, `WorkerOutcome`, `AggregatedDataItem`, `AggregationReport`, and `AggregationCancelled` in `tests/unit/test_models.py`.
+- [ ] T004 [P] Write failing table-driven collect-all validation tests for worker count, run-level identity uniqueness, URL, GET-only method, positive timeout, concurrency bounds, and rejection of unknown top-level or worker fields in `tests/unit/test_validation.py` (FR-001, FR-002, FR-021, FR-022, SC-007).
+- [ ] T005 [P] Write failing JSON serialization tests in `tests/unit/test_serialization.py` that assert the report contract, stable configured order, success data including `null` with a required 2xx `http_status`, unsuccessful `data: null`, the closed failure-code set, finite non-negative durations, and the exact ordered `{"errors":[{"field":"...","code":"...","message":"..."}]}` validation-error envelope (FR-012–FR-016, SC-001, SC-009).
 
 ### Shared implementation
 
-- [ ] T006 Implement frozen, slotted enums and configuration records in `src/distributed_http_aggregator/models.py`, enforcing verbatim constraints: `worker_id` is "Trimmed, non-empty, unique within the run; maximum 64 characters"; `url` is an "Absolute http or https URL; host required; no embedded credentials"; `method` is "Exactly GET for this assignment"; `timeout_ms` is "Greater than 0"; simulated `delay_ms` is "Greater than or equal to 0"; and `listen_port` is "0 for OS assignment or 1–65535 for standalone use" (depends on T003).
-- [ ] T007 Implement `ValidationError`, immutable `WorkerOutcome`, `AggregatedDataItem`, `AggregationReport`, and `AggregationCancelled` in `src/distributed_http_aggregator/models.py`, enforcing `duration_ms` as finite and non-negative, successful `data` as returned data including `null`, unsuccessful `data` as `null`, one outcome per worker, ordered successful data, and an empty successful-data list for all-failure reports (depends on T006).
-- [ ] T008 Implement stable collect-all preflight validation in `src/distributed_http_aggregator/validation.py`, including 3–5 workers, unique identities, absolute credential-free HTTP(S) URLs, GET-only requests, positive timeouts, and `1 <= concurrency_limit <= worker_count`, with no I/O on rejection (depends on T004, T006, T007; FR-001, FR-002, FR-021, FR-022).
-- [ ] T009 [P] Implement contract-shaped JSON conversion and UTF-8 stdout/file writing helpers in `src/distributed_http_aggregator/serialization.py`, always emitting the seven required outcome fields and rejecting non-finite durations without adding a schema-validation dependency (depends on T005, T007; FR-012–FR-016).
+- [ ] T006 Implement frozen, slotted enums and isolated configuration records in `src/distributed_http_aggregator/models.py`, enforcing only local constraints: `worker_id` is "Trimmed, non-empty; maximum 64 characters"; `url` is an "Absolute http or https URL; host required; no embedded credentials"; `method` is "Exactly GET for this assignment"; `timeout_ms` is "Greater than 0"; simulated `delay_ms` is "Greater than or equal to 0"; and `listen_port` is "0 for OS assignment or 1–65535 for standalone use"; do not enforce cross-worker uniqueness in either isolated worker record (depends on T003).
+- [ ] T007 Implement `ValidationError`, `ValidationErrorReport`, immutable `WorkerOutcome`, `AggregatedDataItem`, `AggregationReport`, and `AggregationCancelled` in `src/distributed_http_aggregator/models.py`, enforcing `duration_ms` as finite and non-negative, successful `data` including `null` with required 2xx `http_status`, unsuccessful `data: null`, the closed documented failure-code set, one outcome per worker, ordered successful data, and an empty successful-data list for all-failure reports (depends on T006).
+- [ ] T008 Implement stable collect-all `RunConfiguration` preflight validation in `src/distributed_http_aggregator/validation.py`, including 3–5 workers, cross-worker identity uniqueness at this aggregate level only, absolute credential-free HTTP(S) URLs, GET-only requests, positive timeouts, `1 <= concurrency_limit <= worker_count`, and rejection of unknown top-level or worker fields, with no I/O on rejection (depends on T004, T006, T007; FR-001, FR-002, FR-021, FR-022).
+- [ ] T009 [P] Implement contract-shaped JSON conversion and UTF-8 stdout/file writing helpers in `src/distributed_http_aggregator/serialization.py`, always emitting the seven required outcome fields plus the exact ordered validation-error envelope and rejecting non-finite durations without adding a schema-validation dependency (depends on T005, T007; FR-012–FR-016).
 - [ ] T010 Create reusable sample configurations, monotonic timing tolerance helper `max(0.15 seconds, 25% of the longest configured delay or timeout)`, and leak-check helpers in `tests/conftest.py` (depends on T006, T007).
 
 **Checkpoint**: `tests/unit/test_models.py`, `tests/unit/test_validation.py`, and
@@ -79,7 +79,7 @@ controlled concurrent run with a sequential baseline.
 - [ ] T011 [P] [US1] Write failing `GET /work` and `GET /health` worker contract tests for success, empty/`null` data, asynchronous delay, OS-assigned loopback ports, and runner cleanup in `tests/integration/test_worker_contract.py` (FR-003, SC-008).
 - [ ] T012 [P] [US1] Write failing successful-client tests using `httpx.MockTransport` for identity matching, valid arbitrary JSON data, `null` data, and monotonic per-worker duration in `tests/unit/test_client_mapping.py` (FR-005, FR-013, FR-014).
 - [ ] T013 [P] [US1] Write failing real-loopback integration tests for three and five differently delayed workers, concurrent start, configured-order outcomes, exact source association, and total duration in `tests/integration/test_concurrent_aggregation.py` (FR-004, FR-005, FR-012–FR-018, SC-001, SC-003, SC-009).
-- [ ] T014 [P] [US1] Write the failing controlled concurrent-versus-sequential benchmark with 0.15/0.30/0.45-second delays and diagnostic timing output in `tests/performance/test_concurrent_vs_sequential.py`, asserting concurrent duration is at most longest delay plus tolerance and below 75% of the measured sequential baseline (FR-018, SC-004).
+- [ ] T014 [P] [US1] Write the failing controlled concurrent-versus-sequential benchmark with 0.15/0.30/0.45-second delays and diagnostic timing output in `tests/performance/test_concurrent_vs_sequential.py`, asserting concurrent duration is at most longest delay plus tolerance and, because the delay sum is twice the longest delay, below 75% of both the configured delay sum and measured sequential baseline (FR-018, SC-004).
 - [ ] T015 [P] [US1] Write a failing 20-complete-run simultaneous-response reliability test in `tests/integration/test_simultaneous_completion.py`, asserting exact count, configured order, identity, status, payload association, and absence of stale state on every iteration (FR-016, FR-017, FR-020, SC-002).
 - [ ] T016 [P] [US1] Write failing CLI contract tests for `list-scenarios`, successful `demo`, standalone `worker` readiness, JSON stdout/file separation, and exit code 0 in `tests/integration/test_cli.py` (SC-008, SC-009).
 
@@ -143,12 +143,12 @@ all field errors, empty stdout, and zero request attempts.
 ### Tests first
 
 - [ ] T036 [P] [US3] Write a failing all-failure/all-timeout integration test in `tests/integration/test_complete_failure.py`, asserting a complete report, empty `aggregated_data`, exactly one failure outcome with `data: null` per configured worker, bounded completion, and no unhandled exception (FR-008, FR-012, FR-014, FR-019, SC-006).
-- [ ] T037 [P] [US3] Write a failing invalid-configuration integration test with a request-start spy in `tests/integration/test_invalid_configuration.py`, covering fewer than 3/more than 5 workers, missing/duplicate/over-64-character identities, invalid or credential-bearing URLs, unsupported methods, non-positive timeouts, and invalid concurrency limits (FR-001, FR-002, FR-021, FR-022, SC-007).
+- [ ] T037 [P] [US3] Write a failing invalid-configuration integration test with a request-start spy in `tests/integration/test_invalid_configuration.py`, covering fewer than 3/more than 5 workers, missing/duplicate/over-64-character identities, invalid or credential-bearing URLs, unsupported methods, non-positive timeouts, invalid concurrency limits, and unknown top-level or worker fields (FR-001, FR-002, FR-021, FR-022, SC-007).
 - [ ] T038 [P] [US3] Extend `tests/integration/test_cli.py` with failing `aggregate` and all-fail CLI tests for JSON config loading, structured stderr errors, empty stdout on validation failure, output-file behavior, exit code 2 for invalid configuration, and exit code 0 for total remote failure (SC-006, SC-007, SC-009).
 
 ### Implementation
 
-- [ ] T039 [P] [US3] Define deterministic `all-fail` scenario composition in `src/distributed_http_aggregator/scenarios.py`, combining supported failure/timeout outcomes without random behavior (depends on T036; FR-020).
+- [ ] T039 [US3] Define deterministic `all-fail` scenario composition in `src/distributed_http_aggregator/scenarios.py`, combining supported failure/timeout outcomes without random behavior (depends on T030–T032 and T036; FR-020).
 - [ ] T040 [US3] Implement `aggregate --config` JSON loading, collect-all validation rejection, `all-fail` demo dispatch, output routing, and documented exit-code behavior in `src/distributed_http_aggregator/cli.py` (depends on T037–T039; FR-021, FR-022).
 - [ ] T041 [US3] Create contract-valid `examples/run-normal.json`, `examples/run-partial-failure.json`, and `examples/run-standalone.json` plus deliberately invalid `examples/invalid-run.json` covering multiple validation classes (depends on T040; SC-007, SC-008).
 - [ ] T042 [US3] Run the complete-failure, invalid-configuration, CLI, and example-file tests and append exit-code, no-I/O-on-rejection, and report evidence to `specs/001-async-result-aggregation/verification.md` (depends on T036–T041; SC-006, SC-007, SC-009).
@@ -163,7 +163,7 @@ configuration rejection and never starts network work for invalid input.
 **Purpose**: Prove the complete system and published contracts across all user stories.
 
 - [ ] T043 [P] Add contract-consistency tests in `tests/integration/test_contracts.py` that validate example inputs against the documented required fields and validate emitted reports against every invariant in `contracts/aggregation-report.schema.json` without introducing another runtime dependency.
-- [ ] T044 [P] Add one parametrized end-to-end matrix for all-success, HTTP 500, unavailable, timeout, simultaneous completion, partial failure, total failure, and invalid configuration in `tests/integration/test_acceptance_scenarios.py`, asserting the observable acceptance criteria from `spec.md` (FR-001–FR-024, SC-001–SC-009).
+- [ ] T044 [P] Add one parametrized end-to-end matrix for all-success, HTTP 500, unavailable, timeout, simultaneous completion, partial failure, total failure, and invalid configuration in `tests/integration/test_acceptance_scenarios.py`, executing each scenario for at least two consecutive runs and asserting the observable acceptance criteria plus equivalent worker-status classifications or validation-error code sequences, as applicable, on every repetition (FR-001–FR-024, SC-001–SC-009).
 - [ ] T045 [P] Add repeated lifecycle verification in `tests/integration/test_resource_cleanup.py` that runs successful, failed, timed-out, and cancelled aggregations and asserts no owned pending tasks, open clients, or worker sockets remain after each case.
 - [ ] T046 Run `python -m pytest tests/unit tests/integration` and `python -m pytest tests/performance -v`, then record commands, environment, measured timings, 20-run results, and failures or passes in `specs/001-async-result-aggregation/verification.md` (depends on T043–T045).
 - [ ] T047 Audit FR-001 through FR-024 and SC-001 through SC-009 against implemented source and named automated tests, recording any gap and its resolution in `specs/001-async-result-aggregation/verification.md` (depends on T046).
@@ -290,7 +290,7 @@ Join: T031 -> T032 -> T033 -> T034 -> T035
 
 ```text
 Parallel test work: T036, T037, T038
-Implementation: T039 -> T040 -> T041 -> T042
+Implementation after T030–T032: T039 -> T040 -> T041 -> T042
 ```
 
 ## Implementation Strategy
