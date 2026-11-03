@@ -112,6 +112,54 @@
   no diff.
 - Remaining blockers: none for the User Story 1 checkpoint.
 
+## Batch: T023–T035 — User Story 2 Failure Isolation and Resilience
+
+**Date**: 2026-11-03  
+**JDK**: Eclipse Temurin OpenJDK 21.0.11  
+**Maven**: Apache Maven 3.9.9 via Maven Wrapper 3.3.4  
+**Environment**: Windows 11 PowerShell
+
+### Test-first and implementation evidence
+
+- Added unit coverage for HTTP 500, connection failures, malformed JSON, timeout mapping,
+  unsuccessful null data, and diagnostic redaction in `WorkerHttpClientTest` and
+  `DiagnosticRedactionTest`.
+- Added Jetty contract coverage for HTTP 500 and malformed responses in `WorkerContractTest`.
+- Added mixed-failure isolation, independent timeout, and cancellation/resource-cleanup integration
+  coverage in `FailureIsolationTest`, `TimeoutTest`, and `CancellationCleanupTest`.
+- Implemented fixed HTTP 500/malformed worker behaviors, cancellation-safe scheduled responses,
+  explicit exception unwrapping and stable failure codes, partial cancellation reports, deterministic
+  `http-500`, `unavailable`, `timeout`, and `partial-failure` scenarios, and sanitized stderr
+  diagnostics for failed workers.
+
+### Java verification
+
+1. Full JUnit regression:
+   - Command: `.\mvnw.cmd clean test`
+   - Result: PASS — 31 tests, 0 failures, 0 errors, 0 skipped.
+   - Simultaneous completion: 20/20 runs passed.
+   - Performance: concurrent `0.473695 s` / sequential `0.944638 s` in the regression run;
+     later final verification measured `0.470918 s` / `0.924934 s`, with speedups of `1.994x`
+     and `1.964x`.
+2. Maven verification and executable packaging:
+   - Command: `.\mvnw.cmd clean verify`
+   - Result: PASS — Java 21 compilation, all 31 JUnit tests, and shaded executable JAR packaging.
+   - Existing shade warnings concern duplicate dependency metadata/module descriptors only; they
+     did not affect compilation, tests, or packaging.
+3. Packaged partial-failure smoke test:
+   - Command: `java -jar target\distributed-http-aggregator.jar demo --scenario partial-failure`
+   - Result: PASS — exit code 0; ordered report preserved one success plus HTTP 500,
+     invalid-response, connection-failure, and timeout outcomes. Stderr contained only worker
+     identity, status, duration, stable failure code, and sanitized reason; no URL or response body.
+
+### Scope and blockers
+
+- T023–T035 are complete and marked `[x]` in `tasks.md`.
+- The historical Python implementation was not modified.
+- T036 and all later User Story 3/cross-story tasks remain intentionally incomplete because this
+  implementation scope stops at T035.
+- Remaining blockers for T023–T035: none.
+
 ## Batch: T001–T010 — Setup and Foundation
 
 **Date**: 2026-11-03

@@ -67,7 +67,7 @@ duration is near the longest delay; 20 simultaneous runs preserve exact identity
 - [x] T020 [US1] Implement bounded future orchestration, immediate future creation, `CompletableFuture.allOf`, configured-order collection, derived successful data, and total timing in `src/main/java/edu/university/aggregator/service/AggregationService.java` (depends on T014, T018, T019; FR-004–FR-007, FR-012–FR-019).
 - [x] T021 [US1] Define deterministic `normal` and `simultaneous` scenarios in `src/main/java/edu/university/aggregator/scenario/ScenarioCatalog.java` (depends on T018, T020; FR-003, FR-020).
 - [x] T022 [US1] Implement `list-scenarios`, successful `demo`, and standalone `worker` in `src/main/java/edu/university/aggregator/cli/AggregatorCli.java` and delegate from `Main.java` with JSON stdout, diagnostics stderr, output files, and shutdown cleanup (depends on T017–T021).
-- [ ] T023 [US1] Run the Java US1 JUnit groups and append JDK/Maven versions, 20-run results, and measured timings under `Java 21 Verification` in `specs/001-async-result-aggregation/verification.md` (depends on T012–T022; SC-001, SC-002, SC-004, SC-008, SC-009).
+- [x] T023 [US1] Run the Java US1 JUnit groups and append JDK/Maven versions, 20-run results, and measured timings under `Java 21 Verification` in `specs/001-async-result-aggregation/verification.md` (depends on T012–T022; SC-001, SC-002, SC-004, SC-008, SC-009).
 
 **Checkpoint**: US1 is independently demonstrable from the executable JAR with Java-only evidence.
 
@@ -80,21 +80,21 @@ an active run and prove prompt cleanup and ordered partial cancellation outcomes
 
 ### Tests first
 
-- [ ] T024 [P] [US2] Extend `src/test/java/edu/university/aggregator/unit/WorkerHttpClientTest.java` with HTTP 500, connect/network/protocol, invalid JSON/shape/identity, timeout, and unsuccessful-null-data cases (FR-006–FR-010, FR-014, SC-003, SC-005).
-- [ ] T025 [P] [US2] Extend `src/test/java/edu/university/aggregator/integration/WorkerContractTest.java` with HTTP 500, malformed response, scheduled-work cancellation, and Jetty cleanup cases (FR-003, FR-008, FR-009).
-- [ ] T026 [P] [US2] Write mixed-failure isolation tests in `src/test/java/edu/university/aggregator/integration/FailureIsolationTest.java` (FR-008–FR-014, SC-001, SC-003).
-- [ ] T027 [P] [US2] Write independent timeout-boundary tests in `src/test/java/edu/university/aggregator/integration/TimeoutTest.java` (FR-006, FR-007, FR-019, SC-005).
-- [ ] T028 [P] [US2] Write cancellation and owned-resource cleanup tests in `src/test/java/edu/university/aggregator/integration/CancellationCleanupTest.java` (FR-024).
-- [ ] T029 [P] [US2] Write diagnostic redaction tests in `src/test/java/edu/university/aggregator/unit/DiagnosticRedactionTest.java` (FR-023).
+- [x] T024 [P] [US2] Extend `src/test/java/edu/university/aggregator/unit/WorkerHttpClientTest.java` with HTTP 500, connect/network/protocol, invalid JSON/shape/identity, timeout, and unsuccessful-null-data cases (FR-006–FR-010, FR-014, SC-003, SC-005).
+- [x] T025 [P] [US2] Extend `src/test/java/edu/university/aggregator/integration/WorkerContractTest.java` with HTTP 500, malformed response, scheduled-work cancellation, and Jetty cleanup cases (FR-003, FR-008, FR-009).
+- [x] T026 [P] [US2] Write mixed-failure isolation tests in `src/test/java/edu/university/aggregator/integration/FailureIsolationTest.java` (FR-008–FR-014, SC-001, SC-003).
+- [x] T027 [P] [US2] Write independent timeout-boundary tests in `src/test/java/edu/university/aggregator/integration/TimeoutTest.java` (FR-006, FR-007, FR-019, SC-005).
+- [x] T028 [P] [US2] Write cancellation and owned-resource cleanup tests in `src/test/java/edu/university/aggregator/integration/CancellationCleanupTest.java` (FR-024).
+- [x] T029 [P] [US2] Write diagnostic redaction tests in `src/test/java/edu/university/aggregator/unit/DiagnosticRedactionTest.java` (FR-023).
 
 ### Implementation
 
-- [ ] T030 [P] [US2] Add fixed HTTP-500 and malformed behaviors plus cancellation-safe scheduled responses in `src/main/java/edu/university/aggregator/worker/` (depends on T025; FR-003, FR-009).
-- [ ] T031 [P] [US2] Implement explicit Java exception unwrapping/mapping and sanitized stable codes in `src/main/java/edu/university/aggregator/client/WorkerHttpClient.java` (depends on T024; FR-006–FR-010, FR-014).
-- [ ] T032 [US2] Implement parent cancellation in `src/main/java/edu/university/aggregator/service/AggregationService.java`: cancel outstanding futures, retain settled outcomes, mark remaining outcomes cancelled, close owned resources, and expose `complete=false` partial report (depends on T028, T031; FR-024).
-- [ ] T033 [US2] Define deterministic `http-500`, `unavailable`, `timeout`, and `partial-failure` scenarios in `src/main/java/edu/university/aggregator/scenario/ScenarioCatalog.java` (depends on T026, T027, T030–T032; FR-020).
-- [ ] T034 [US2] Add sanitized terminal diagnostics in `src/main/java/edu/university/aggregator/client/WorkerHttpClient.java` and `src/main/java/edu/university/aggregator/service/AggregationService.java` (depends on T029, T031, T032; FR-023).
-- [ ] T035 [US2] Extend `demo` for partial-failure scenarios in `src/main/java/edu/university/aggregator/cli/AggregatorCli.java` with exit 0 for valid remote-failure reports (depends on T033, T034).
+- [x] T030 [P] [US2] Add fixed HTTP-500 and malformed behaviors plus cancellation-safe scheduled responses in `src/main/java/edu/university/aggregator/worker/` (depends on T025; FR-003, FR-009).
+- [x] T031 [P] [US2] Implement explicit Java exception unwrapping/mapping and sanitized stable codes in `src/main/java/edu/university/aggregator/client/WorkerHttpClient.java` (depends on T024; FR-006–FR-010, FR-014).
+- [x] T032 [US2] Implement parent cancellation in `src/main/java/edu/university/aggregator/service/AggregationService.java`: cancel outstanding futures, retain settled outcomes, mark remaining outcomes cancelled, close owned resources, and expose `complete=false` partial report (depends on T028, T031; FR-024).
+- [x] T033 [US2] Define deterministic `http-500`, `unavailable`, `timeout`, and `partial-failure` scenarios in `src/main/java/edu/university/aggregator/scenario/ScenarioCatalog.java` (depends on T026, T027, T030–T032; FR-020).
+- [x] T034 [US2] Add sanitized terminal diagnostics in `src/main/java/edu/university/aggregator/client/WorkerHttpClient.java` and `src/main/java/edu/university/aggregator/service/AggregationService.java` (depends on T029, T031, T032; FR-023).
+- [x] T035 [US2] Extend `demo` for partial-failure scenarios in `src/main/java/edu/university/aggregator/cli/AggregatorCli.java` with exit 0 for valid remote-failure reports (depends on T033, T034).
 - [ ] T036 [US2] Run all Java US2 tests and append failure mapping, timeout, cancellation, redaction, and cleanup evidence to `specs/001-async-result-aggregation/verification.md` (depends on T024–T035; SC-003, SC-005, SC-008, SC-009).
 
 ## Phase 5: User Story 3 — Diagnose Complete Failure and Invalid Configuration (Priority: P3)

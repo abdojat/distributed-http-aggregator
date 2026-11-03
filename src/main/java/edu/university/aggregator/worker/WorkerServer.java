@@ -5,8 +5,11 @@ import edu.university.aggregator.json.JsonCodec;
 import edu.university.aggregator.model.SimulatedWorkerConfiguration;
 import edu.university.aggregator.model.WorkerBehavior;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.io.Content;
@@ -28,13 +31,11 @@ public final class WorkerServer implements AutoCloseable {
     private final Server server;
     private final ServerConnector connector;
     private final ScheduledExecutorService scheduler;
+    private final Set<ScheduledFuture<?>> scheduledResponses = ConcurrentHashMap.newKeySet();
 
     public WorkerServer(SimulatedWorkerConfiguration configuration, JsonCodec codec) {
         this.configuration = Objects.requireNonNull(configuration, "configuration");
         this.codec = Objects.requireNonNull(codec, "codec");
-        if (configuration.behavior() != WorkerBehavior.SUCCESS) {
-            throw new IllegalArgumentException("US1 worker supports success behavior only");
-        }
         this.server = new Server();
         this.connector = new ServerConnector(server);
         connector.setHost(configuration.listenHost());
@@ -78,6 +79,8 @@ public final class WorkerServer implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
+        scheduledResponses.forEach(task -> task.cancel(false));
+        scheduledResponses.clear();
         scheduler.shutdownNow();
         if (!server.isStopped()) {
             server.stop();
@@ -101,15 +104,38 @@ public final class WorkerServer implements AutoCloseable {
                 return true;
             }
             if ("/work".equals(path)) {
-                var body = JsonNodeFactory.instance.objectNode()
-                        .put("worker_id", configuration.workerId())
-                        .set("data", configuration.data());
-                scheduler.schedule(() -> writeJson(response, callback, body),
+                ScheduledFuture<?> scheduled = scheduler.schedule(
+                        () -> writeWorkResponse(response, callback),
                         configuration.delayMs(), TimeUnit.MILLISECONDS);
+                scheduledResponses.add(scheduled);
                 return true;
             }
             Response.writeError(request, response, callback, 404);
             return true;
+        }
+
+        private void writeWorkResponse(Response response, Callback callback) {
+            try {
+                if (configuration.behavior() == WorkerBehavior.HTTP_500) {
+                    response.setStatus(500);
+                    response.getHeaders().put(HttpHeader.CONTENT_TYPE,
+                            "application/json; charset=utf-8");
+                    Content.Sink.write(response, true,
+                            "{\"error\":\"simulated worker failure\"}", callback);
+                } else if (configuration.behavior() == WorkerBehavior.MALFORMED) {
+                    response.setStatus(200);
+                    response.getHeaders().put(HttpHeader.CONTENT_TYPE,
+                            "application/json; charset=utf-8");
+                    Content.Sink.write(response, true, "{\"worker_id\":", callback);
+                } else {
+                    var body = JsonNodeFactory.instance.objectNode()
+                            .put("worker_id", configuration.workerId())
+                            .set("data", configuration.data());
+                    writeJson(response, callback, body);
+                }
+            } catch (Exception exception) {
+                callback.failed(exception);
+            }
         }
 
         private void writeJson(Response response, Callback callback, Object body) {

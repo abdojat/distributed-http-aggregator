@@ -28,7 +28,7 @@ public final class AggregatorCli {
             }
             return switch (args[0]) {
                 case "list-scenarios" -> listScenarios(stdout);
-                case "demo" -> demo(slice(args), stdout);
+                case "demo" -> demo(slice(args), stdout, stderr);
                 case "worker" -> worker(slice(args), stdout);
                 default -> throw new IllegalArgumentException("Unknown command: " + args[0]);
             };
@@ -49,13 +49,14 @@ public final class AggregatorCli {
         return 0;
     }
 
-    private int demo(String[] args, PrintStream stdout) throws Exception {
+    private int demo(String[] args, PrintStream stdout, PrintStream stderr) throws Exception {
         Map<String, String> options = options(args);
         ScenarioDefinition scenario = ScenarioCatalog.require(require(options, "--scenario"));
         try (WorkerFleet fleet = WorkerFleet.start(scenario.workers(), codec);
              AggregationService service = AggregationService.create(scenario.workers().size(), codec)) {
             var report = service.aggregate(fleet.runConfiguration(scenario.timeoutMs())).join();
             String json = codec.writeAggregationReport(report);
+            writeDiagnostics(report, stderr);
             String output = options.get("--output");
             if (output == null) {
                 stdout.println(json);
@@ -66,6 +67,16 @@ public final class AggregatorCli {
         return 0;
     }
 
+    private void writeDiagnostics(
+            edu.university.aggregator.model.AggregationReport report, PrintStream stderr) {
+        report.workerOutcomes().stream()
+                .filter(outcome -> outcome.status() != edu.university.aggregator.model.WorkerStatus.SUCCESS)
+                .forEach(outcome -> stderr.printf(
+                        "worker=%s status=%s duration_ms=%.3f failure_code=%s reason=%s%n",
+                        outcome.workerId(), outcome.status().value(), outcome.durationMs(),
+                        outcome.failureCode().value(), outcome.failureReason()));
+    }
+
     private int worker(String[] args, PrintStream stdout) throws Exception {
         Map<String, String> options = options(args);
         String id = require(options, "--id");
@@ -73,9 +84,6 @@ public final class AggregatorCli {
         int port = Integer.parseInt(require(options, "--port"));
         long delayMs = Long.parseLong(require(options, "--delay-ms"));
         WorkerBehavior behavior = WorkerBehavior.fromValue(require(options, "--behavior"));
-        if (behavior != WorkerBehavior.SUCCESS) {
-            throw new IllegalArgumentException("US1 standalone worker supports success behavior only");
-        }
         JsonNode data = options.containsKey("--data-json")
                 ? codec.readTree(options.get("--data-json"))
                 : codec.readTree("null");

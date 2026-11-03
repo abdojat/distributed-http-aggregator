@@ -27,11 +27,16 @@ final class AsyncPermitPool {
     }
 
     private synchronized void release() {
-        CompletableFuture<Permit> waiter = waiters.poll();
-        if (waiter == null) {
-            available++;
-        } else {
-            waiter.complete(new Permit(this));
+        while (true) {
+            CompletableFuture<Permit> waiter = waiters.poll();
+            if (waiter == null) {
+                available++;
+                return;
+            }
+            if (!waiter.isCancelled()) {
+                waiter.complete(new Permit(this));
+                return;
+            }
         }
     }
 

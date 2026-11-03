@@ -10,9 +10,12 @@ import java.util.List;
 
 public final class WorkerFleet implements AutoCloseable {
     private final List<WorkerServer> servers;
+    private final List<SimulatedWorkerConfiguration> configurations;
 
-    private WorkerFleet(List<WorkerServer> servers) {
+    private WorkerFleet(
+            List<WorkerServer> servers, List<SimulatedWorkerConfiguration> configurations) {
         this.servers = List.copyOf(servers);
+        this.configurations = List.copyOf(configurations);
     }
 
     public static WorkerFleet start(List<SimulatedWorkerConfiguration> configurations, JsonCodec codec)
@@ -20,11 +23,14 @@ public final class WorkerFleet implements AutoCloseable {
         List<WorkerServer> started = new ArrayList<>();
         try {
             for (SimulatedWorkerConfiguration configuration : configurations) {
+                if (configuration.behavior() == edu.university.aggregator.model.WorkerBehavior.UNAVAILABLE) {
+                    continue;
+                }
                 WorkerServer server = new WorkerServer(configuration, codec);
                 server.start();
                 started.add(server);
             }
-            return new WorkerFleet(started);
+            return new WorkerFleet(started, configurations);
         } catch (Exception exception) {
             closeReverse(started);
             throw exception;
@@ -32,8 +38,17 @@ public final class WorkerFleet implements AutoCloseable {
     }
 
     public RunConfiguration runConfiguration(long timeoutMs) {
-        List<WorkerConfiguration> workers = servers.stream()
-                .map(server -> new WorkerConfiguration(server.workerId(), server.workUrl(), "GET", timeoutMs))
+        List<WorkerConfiguration> workers = configurations.stream()
+                .map(configuration -> {
+                    WorkerServer server = servers.stream()
+                            .filter(candidate -> candidate.workerId().equals(configuration.workerId()))
+                            .findFirst()
+                            .orElse(null);
+                    String url = server == null
+                            ? "http://" + configuration.listenHost() + ":1/work"
+                            : server.workUrl();
+                    return new WorkerConfiguration(configuration.workerId(), url, "GET", timeoutMs);
+                })
                 .toList();
         return new RunConfiguration(workers.size(), workers);
     }

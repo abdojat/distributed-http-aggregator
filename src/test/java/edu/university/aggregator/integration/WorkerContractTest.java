@@ -60,11 +60,37 @@ class WorkerContractTest {
         }
     }
 
+    @Test
+    void servesHttp500AndMalformedBehaviors() throws Exception {
+            try (WorkerServer error = new WorkerServer(new SimulatedWorkerConfiguration(
+                    "worker-error", WorkerBehavior.HTTP_500, 0,
+                    JsonNodeFactory.instance.objectNode(), "127.0.0.1", 0), codec);
+                 WorkerServer malformed = new WorkerServer(new SimulatedWorkerConfiguration(
+                         "worker-malformed", WorkerBehavior.MALFORMED, 0,
+                         JsonNodeFactory.instance.objectNode(), "127.0.0.1", 0), codec)) {
+                error.start();
+                malformed.start();
+                HttpClient client = HttpClient.newHttpClient();
+                HttpResponse<String> errorResponse = rawGet(client, error.workUrl());
+                HttpResponse<String> malformedResponse = rawGet(client, malformed.workUrl());
+
+                assertEquals(500, errorResponse.statusCode());
+                assertEquals(200, malformedResponse.statusCode());
+                assertTrue(malformedResponse.body().contains("\"worker_id\":"));
+        }
+    }
+
     private HttpResult get(HttpClient client, String url) throws Exception {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .timeout(Duration.ofSeconds(2)).GET().build();
         HttpResponse<String> response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).join();
         return new HttpResult(response.statusCode(), codec.readTree(response.body()));
+    }
+
+    private HttpResponse<String> rawGet(HttpClient client, String url) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                .timeout(Duration.ofSeconds(2)).GET().build();
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).join();
     }
 
     private record HttpResult(int status, JsonNode body) {
