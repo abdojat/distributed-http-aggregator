@@ -1,6 +1,6 @@
 # Feature Specification: Asynchronous HTTP Client & Result Aggregator
 
-**Feature Branch**: `N/A (branch creation hook not configured)`
+**Feature Branch**: `master`
 
 **Created**: 2026-11-03
 

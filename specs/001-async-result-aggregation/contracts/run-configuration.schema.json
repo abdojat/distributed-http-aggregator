@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/distributed-http-aggregator/run-configuration.schema.json",
+  "title": "RunConfiguration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["concurrency_limit", "workers"],
+  "properties": {
+    "concurrency_limit": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Maximum number of active worker requests; must not exceed worker count."
+    },
+    "workers": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 5,
+      "items": {
+        "$ref": "#/$defs/worker"
+      }
+    }
+  },
+  "$defs": {
+    "worker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worker_id", "url", "method", "timeout_ms"],
+      "properties": {
+        "worker_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https?://"
+        },
+        "method": {
+          "const": "GET"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  },
+  "description": "Worker identities must be unique. concurrency_limit must be no greater than the number of workers; these cross-field rules are enforced by aggregate validation."
+}

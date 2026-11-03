@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/distributed-http-aggregator/aggregation-report.schema.json",
+  "title": "AggregationReport",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["complete", "total_duration_ms", "worker_outcomes", "aggregated_data"],
+  "properties": {
+    "complete": {
+      "type": "boolean"
+    },
+    "total_duration_ms": {
+      "type": "number",
+      "minimum": 0
+    },
+    "worker_outcomes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/workerOutcome"
+      }
+    },
+    "aggregated_data": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/aggregatedDataItem"
+      }
+    }
+  },
+  "$defs": {
+    "workerOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worker_id",
+        "status",
+        "duration_ms",
+        "data",
+        "http_status",
+        "failure_code",
+        "failure_reason"
+      ],
+      "properties": {
+        "worker_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "success",
+            "http_error",
+            "connection_failure",
+            "timeout",
+            "invalid_response",
+            "cancelled"
+          ]
+        },
+        "duration_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "data": {},
+        "http_status": {
+          "type": ["integer", "null"],
+          "minimum": 100,
+          "maximum": 599
+        },
+        "failure_code": {
+          "type": ["string", "null"]
+        },
+        "failure_reason": {
+          "type": ["string", "null"]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "success"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "http_status": {
+                "type": "integer",
+                "minimum": 200,
+                "maximum": 299
+              },
+              "failure_code": {
+                "type": "null"
+              },
+              "failure_reason": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "data": {
+                "type": "null"
+              },
+              "failure_code": {
+                "type": "string",
+                "minLength": 1
+              },
+              "failure_reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "aggregatedDataItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worker_id", "data"],
+      "properties": {
+        "worker_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "data": {}
+      }
+    }
+  },
+  "description": "Outcomes and aggregated data use configured worker order. Completed reports contain exactly one outcome per configured worker; these cross-record rules are enforced by domain validation."
+}
