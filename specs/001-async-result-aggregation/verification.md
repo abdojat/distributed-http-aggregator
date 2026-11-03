@@ -112,6 +112,52 @@
   no diff.
 - Remaining blockers: none for the User Story 1 checkpoint.
 
+### Batch: T036–T042 — Java User Story 2/3 Completion
+
+**Date**: 2026-11-03  
+**JDK**: Eclipse Temurin OpenJDK 21.0.11  
+**Maven**: Maven Wrapper 3.3.4 provisioning Apache Maven 3.9.9 on Java 21  
+**Environment**: Windows 11 PowerShell
+
+#### Test-first and focused verification
+
+- Command: `.\mvnw.cmd '-Dtest=FailureIsolationTest,TimeoutTest,CancellationCleanupTest,DiagnosticRedactionTest,CliTest' test`
+  - Result: PASS — 7 tests, 0 failures, 0 errors, 0 skipped for the T036 US2 checkpoint.
+- Command: `.\mvnw.cmd '-Dtest=CompleteFailureTest,InvalidConfigurationTest,CliTest,FailureIsolationTest,TimeoutTest' test`
+  - Result: PASS — 10 tests, 0 failures, 0 errors, 0 skipped.
+- Expected RED checkpoint before implementation:
+  - The new US3 tests compiled but failed because `all-fail` and `aggregate` were unavailable;
+    invalid configuration returned the generic exit code instead of structured exit 2.
+
+#### User Story 3 evidence
+
+- `all-fail` starts five deterministic workers whose outcomes are HTTP error, invalid response,
+  connection failure, timeout, and HTTP error. The report completed normally with five outcomes,
+  zero aggregated data items, one terminal failure outcome per configured worker, and no
+  unhandled exception.
+- `aggregate --config` now performs strict JSON loading, collect-all validation, report/output
+  routing, and documented exit codes. Invalid JSON/configuration is emitted as the structured
+  `{"errors":[...]}` stderr envelope with exit 2; valid remote failure remains exit 0.
+- Invalid configuration coverage includes worker count, missing/duplicate identities, invalid URLs,
+  unsupported methods, invalid timeouts, invalid concurrency limits, unknown fields, and invalid
+  types. The request-start spy observed zero requests on rejection.
+- Added contract-valid examples under `examples/`, including the multi-error `invalid-run.json`.
+
+#### Regression, reliability, and performance
+
+- Command: `.\mvnw.cmd test`
+  - Result: PASS — 36 tests, 0 failures, 0 errors, 0 skipped.
+  - Reliability evidence: `RELIABILITY_METRICS runs=20 passed=20 failures=0`.
+  - Performance evidence: `PERF_METRICS concurrent_seconds=0.457554 sequential_seconds=0.925566 speedup=2.023`;
+    concurrent execution remained within the configured 450 ms bound and beat the sequential baseline.
+- Command: `.\mvnw.cmd clean verify`
+  - Result: PASS — 36 tests, 0 failures, 0 errors, 0 skipped; executable shaded JAR packaged.
+
+#### Scope checkpoint
+
+- T036–T042 are complete and verified.
+- T043 and all later tasks remain intentionally deferred as required by the implementation scope.
+
 ## Batch: T023–T035 — User Story 2 Failure Isolation and Resilience
 
 **Date**: 2026-11-03  

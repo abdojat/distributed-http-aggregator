@@ -15,7 +15,8 @@ public final class JsonCodec {
     public JsonCodec() {
         mapper = new ObjectMapper()
                 .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-                .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+                .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
     }
 
     public JsonNode readTree(String json) throws JsonProcessingException {

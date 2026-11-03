@@ -1,0 +1,10 @@
+{
+  "concurrency_limit": 5,
+  "workers": [
+    {"worker_id": "worker-a", "url": "http://127.0.0.1:8001/work", "method": "GET", "timeout_ms": 400},
+    {"worker_id": "worker-b", "url": "http://127.0.0.1:8002/work", "method": "GET", "timeout_ms": 400},
+    {"worker_id": "worker-c", "url": "http://127.0.0.1:8003/work", "method": "GET", "timeout_ms": 400},
+    {"worker_id": "worker-d", "url": "http://127.0.0.1:8004/work", "method": "GET", "timeout_ms": 400},
+    {"worker_id": "worker-e", "url": "http://127.0.0.1:8005/work", "method": "GET", "timeout_ms": 400}
+  ]
+}

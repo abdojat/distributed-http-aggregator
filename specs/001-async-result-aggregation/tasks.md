@@ -95,7 +95,7 @@ an active run and prove prompt cleanup and ordered partial cancellation outcomes
 - [x] T033 [US2] Define deterministic `http-500`, `unavailable`, `timeout`, and `partial-failure` scenarios in `src/main/java/edu/university/aggregator/scenario/ScenarioCatalog.java` (depends on T026, T027, T030–T032; FR-020).
 - [x] T034 [US2] Add sanitized terminal diagnostics in `src/main/java/edu/university/aggregator/client/WorkerHttpClient.java` and `src/main/java/edu/university/aggregator/service/AggregationService.java` (depends on T029, T031, T032; FR-023).
 - [x] T035 [US2] Extend `demo` for partial-failure scenarios in `src/main/java/edu/university/aggregator/cli/AggregatorCli.java` with exit 0 for valid remote-failure reports (depends on T033, T034).
-- [ ] T036 [US2] Run all Java US2 tests and append failure mapping, timeout, cancellation, redaction, and cleanup evidence to `specs/001-async-result-aggregation/verification.md` (depends on T024–T035; SC-003, SC-005, SC-008, SC-009).
+- [x] T036 [US2] Run all Java US2 tests and append failure mapping, timeout, cancellation, redaction, and cleanup evidence to `specs/001-async-result-aggregation/verification.md` (depends on T024–T035; SC-003, SC-005, SC-008, SC-009).
 
 ## Phase 5: User Story 3 — Diagnose Complete Failure and Invalid Configuration (Priority: P3)
 
@@ -106,15 +106,15 @@ returns exit 2, every field error, empty stdout, and zero request attempts.
 
 ### Tests first
 
-- [ ] T037 [P] [US3] Write all-failure/all-timeout tests in `src/test/java/edu/university/aggregator/integration/CompleteFailureTest.java` (FR-008, FR-012, FR-014, FR-019, SC-006).
-- [ ] T038 [P] [US3] Write invalid-configuration tests with a request-start spy in `src/test/java/edu/university/aggregator/integration/InvalidConfigurationTest.java` (FR-001, FR-002, FR-021, FR-022, SC-007).
-- [ ] T039 [P] [US3] Extend `src/test/java/edu/university/aggregator/integration/CliTest.java` with `aggregate`, all-fail, JSON loading, structured stderr, file output, and exit-code cases (SC-006, SC-007, SC-009).
+- [x] T037 [P] [US3] Write all-failure/all-timeout tests in `src/test/java/edu/university/aggregator/integration/CompleteFailureTest.java` (FR-008, FR-012, FR-014, FR-019, SC-006).
+- [x] T038 [P] [US3] Write invalid-configuration tests with a request-start spy in `src/test/java/edu/university/aggregator/integration/InvalidConfigurationTest.java` (FR-001, FR-002, FR-021, FR-022, SC-007).
+- [x] T039 [P] [US3] Extend `src/test/java/edu/university/aggregator/integration/CliTest.java` with `aggregate`, all-fail, JSON loading, structured stderr, file output, and exit-code cases (SC-006, SC-007, SC-009).
 
 ### Implementation
 
-- [ ] T040 [US3] Define deterministic `all-fail` composition in `src/main/java/edu/university/aggregator/scenario/ScenarioCatalog.java` (depends on T031–T033, T037; FR-020).
-- [ ] T041 [US3] Implement `aggregate --config`, strict JSON loading, collect-all rejection, all-fail dispatch, routing, and exit codes in `src/main/java/edu/university/aggregator/cli/AggregatorCli.java` (depends on T038–T040; FR-021, FR-022).
-- [ ] T042 [US3] Create contract-valid `examples/run-normal.json`, `examples/run-partial-failure.json`, `examples/run-standalone.json`, and multi-error `examples/invalid-run.json` (depends on T041; SC-007, SC-008).
+- [x] T040 [US3] Define deterministic `all-fail` composition in `src/main/java/edu/university/aggregator/scenario/ScenarioCatalog.java` (depends on T031–T033, T037; FR-020).
+- [x] T041 [US3] Implement `aggregate --config`, strict JSON loading, collect-all rejection, all-fail dispatch, routing, and exit codes in `src/main/java/edu/university/aggregator/cli/AggregatorCli.java` (depends on T038–T040; FR-021, FR-022).
+- [x] T042 [US3] Create contract-valid `examples/run-normal.json`, `examples/run-partial-failure.json`, `examples/run-standalone.json`, and multi-error `examples/invalid-run.json` (depends on T041; SC-007, SC-008).
 - [ ] T043 [US3] Run Java US3 tests and append total-failure, exit-code, no-I/O-on-rejection, and report evidence to `specs/001-async-result-aggregation/verification.md` (depends on T037–T042; SC-006, SC-007, SC-009).
 
 ## Phase 6: Cross-Story Verification and Documentation

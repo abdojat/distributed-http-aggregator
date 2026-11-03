@@ -2,7 +2,11 @@ package edu.university.aggregator.cli;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import edu.university.aggregator.json.JsonCodec;
+import edu.university.aggregator.config.RunConfigurationValidator;
+import edu.university.aggregator.model.RunConfiguration;
 import edu.university.aggregator.model.SimulatedWorkerConfiguration;
+import edu.university.aggregator.model.ValidationError;
+import edu.university.aggregator.model.ValidationErrorReport;
 import edu.university.aggregator.model.WorkerBehavior;
 import edu.university.aggregator.scenario.ScenarioCatalog;
 import edu.university.aggregator.scenario.ScenarioDefinition;
@@ -29,6 +33,7 @@ public final class AggregatorCli {
             return switch (args[0]) {
                 case "list-scenarios" -> listScenarios(stdout);
                 case "demo" -> demo(slice(args), stdout, stderr);
+                case "aggregate" -> aggregate(slice(args), stdout, stderr);
                 case "worker" -> worker(slice(args), stdout);
                 default -> throw new IllegalArgumentException("Unknown command: " + args[0]);
             };
@@ -65,6 +70,63 @@ public final class AggregatorCli {
             }
         }
         return 0;
+    }
+
+    private int aggregate(String[] args, PrintStream stdout, PrintStream stderr) throws Exception {
+        Map<String, String> options = options(args);
+        Path configPath = Path.of(require(options, "--config"));
+        String json;
+        try {
+            json = Files.readString(configPath, StandardCharsets.UTF_8);
+        } catch (java.io.IOException exception) {
+            stderr.println(exception.getMessage());
+            return 1;
+        }
+
+        JsonNode root;
+        try {
+            root = codec.readTree(json);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException exception) {
+            return validationFailure(
+                    List.of(new ValidationError("$", "invalid_json", "configuration is not valid JSON")),
+                    stderr);
+        }
+
+        List<ValidationError> errors = new RunConfigurationValidator().validate(root);
+        if (!errors.isEmpty()) {
+            return validationFailure(errors, stderr);
+        }
+
+        RunConfiguration configuration;
+        try {
+            configuration = codec.readRunConfiguration(json);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException | IllegalArgumentException exception) {
+            return validationFailure(
+                    List.of(new ValidationError("$", "invalid_configuration",
+                            "configuration does not match the run contract")),
+                    stderr);
+        }
+
+        try (AggregationService service = AggregationService.create(configuration.concurrencyLimit(), codec)) {
+            var report = service.aggregate(configuration).join();
+            String output = codec.writeAggregationReport(report);
+            writeOutput(output, options.get("--output"), stdout);
+            writeDiagnostics(report, stderr);
+        }
+        return 0;
+    }
+
+    private int validationFailure(List<ValidationError> errors, PrintStream stderr) throws Exception {
+        stderr.println(codec.writeValidationErrors(new ValidationErrorReport(errors)));
+        return 2;
+    }
+
+    private static void writeOutput(String output, String path, PrintStream stdout) throws Exception {
+        if (path == null) {
+            stdout.println(output);
+        } else {
+            Files.writeString(Path.of(path), output + System.lineSeparator(), StandardCharsets.UTF_8);
+        }
     }
 
     private void writeDiagnostics(

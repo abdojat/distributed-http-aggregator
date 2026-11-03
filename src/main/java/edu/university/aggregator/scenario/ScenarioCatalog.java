@@ -41,7 +41,17 @@ public final class ScenarioCatalog {
                             worker("worker-c", WorkerBehavior.MALFORMED, 20, 3),
                             worker("worker-d", WorkerBehavior.UNAVAILABLE, 0, 4),
                             worker("worker-e", WorkerBehavior.SUCCESS, 500, 5)),
-                    400));
+                    400),
+            new ScenarioDefinition(
+                    "all-fail",
+                    "Every configured worker fails or times out",
+                    List.of(
+                            worker("worker-a", WorkerBehavior.HTTP_500, 20, 1),
+                            worker("worker-b", WorkerBehavior.MALFORMED, 20, 2),
+                            worker("worker-c", WorkerBehavior.UNAVAILABLE, 0, 3),
+                            worker("worker-d", WorkerBehavior.SUCCESS, 500, 4),
+                            worker("worker-e", WorkerBehavior.HTTP_500, 30, 5)),
+                    100));
 
     private ScenarioCatalog() {
     }

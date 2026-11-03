@@ -1,0 +1,8 @@
+{
+  "concurrency_limit": 3,
+  "workers": [
+    {"worker_id": "worker-a", "url": "http://127.0.0.1:8001/work", "method": "GET", "timeout_ms": 1000},
+    {"worker_id": "worker-b", "url": "http://127.0.0.1:8002/work", "method": "GET", "timeout_ms": 1000},
+    {"worker_id": "worker-c", "url": "http://127.0.0.1:8003/work", "method": "GET", "timeout_ms": 1000}
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "concurrency_limit": 0,
+  "workers": [
+    {"worker_id": "duplicate", "url": "ftp://localhost/work", "method": "POST", "timeout_ms": 0},
+    {"worker_id": "duplicate", "url": "not-a-url", "method": "PATCH", "timeout_ms": "fast"}
+  ]
+}

@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.fasterxml.jackson.databind.JsonNode;
 import edu.university.aggregator.cli.AggregatorCli;
 import edu.university.aggregator.json.JsonCodec;
+import edu.university.aggregator.scenario.ScenarioCatalog;
+import edu.university.aggregator.worker.WorkerFleet;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -44,6 +46,48 @@ class CliTest {
             assertEquals(5, codec.readTree(Files.readString(output)).path("worker_outcomes").size());
         } finally {
             Files.deleteIfExists(output);
+        }
+    }
+
+    @Test
+    void allFailDemoReturnsValidReportAndSuccessExitCode() throws Exception {
+            Invocation invocation = invoke("demo", "--scenario", "all-fail");
+            assertEquals(0, invocation.code());
+            JsonNode report = codec.readTree(invocation.stdout());
+            assertEquals(5, report.path("worker_outcomes").size());
+            assertEquals(0, report.path("aggregated_data").size());
+            assertTrue(report.path("worker_outcomes").findValuesAsText("status")
+                    .stream().noneMatch("success"::equals));
+        }
+
+    @Test
+    void aggregateLoadsJsonAndContactsRunningWorkers() throws Exception {
+            var scenario = ScenarioCatalog.require("normal");
+            try (var fleet = WorkerFleet.start(scenario.workers(), codec)) {
+                Path config = Files.createTempFile("run-normal", ".json");
+                try {
+                    Files.writeString(config, codec.write(fleet.runConfiguration(scenario.timeoutMs())));
+                    Invocation invocation = invoke("aggregate", "--config", config.toString());
+                    assertEquals(0, invocation.code());
+                    assertEquals(3, codec.readTree(invocation.stdout()).path("worker_outcomes").size());
+                    assertEquals("", invocation.stderr());
+                } finally {
+                    Files.deleteIfExists(config);
+                }
+            }
+        }
+
+    @Test
+    void aggregateRejectsInvalidJsonBeforeWritingOutput() throws Exception {
+            Path config = Files.createTempFile("invalid-run", ".json");
+            try {
+                Files.writeString(config, "{\"workers\": []}");
+                Invocation invocation = invoke("aggregate", "--config", config.toString());
+                assertEquals(2, invocation.code());
+                assertTrue(invocation.stdout().isBlank());
+                assertTrue(codec.readTree(invocation.stderr()).path("errors").size() > 0);
+            } finally {
+                Files.deleteIfExists(config);
         }
     }
 
