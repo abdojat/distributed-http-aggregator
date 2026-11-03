@@ -1,7 +1,6 @@
 # Quickstart and Validation Guide
 
-This guide validates the final Java 21 implementation. The preserved Python prototype is
-historical and is not valid Java evidence or part of the Maven build.
+This guide validates the final Java 21 implementation.
 
 ## Prerequisites
 
@@ -21,6 +20,9 @@ java -version
 
 The clean build compiles Java release 21, runs all JUnit 5 tests, and creates
 `target\distributed-http-aggregator.jar`.
+
+The recorded performance benchmark completed the concurrent run in `0.462817` seconds versus
+`0.949622` seconds sequentially, for a `2.052x` speedup.
 
 Focused test groups:
 
@@ -78,6 +80,14 @@ java -jar target\distributed-http-aggregator.jar aggregate --config examples\run
 
 Ctrl+C invokes cleanup for each standalone worker. The `demo` command is preferred for grading
 because it owns and cleans up all loopback workers automatically.
+
+## Engineering reflection
+
+SDD made the contracts, architecture, acceptance criteria, and verification evidence explicit
+before implementation. The final Java design uses asynchronous HTTP futures, bounded concurrency,
+independent deadlines, deterministic ordering, failure isolation, and resource cleanup. Testing
+exposed deadline-boundary and cancellation-race defects that would not be apparent from a single
+successful demonstration.
 
 ## Contract references
 

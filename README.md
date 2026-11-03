@@ -6,10 +6,8 @@ This repository is a university distributed-systems assignment demonstrating con
 requests to independent workers, deterministic result aggregation, and failure isolation. The
 selected project option is the asynchronous HTTP client and result aggregator.
 
-The **final deliverable is the Java 21 implementation** in `src/main/java` and its Maven/JUnit
-verification. The original Python implementation under `src/distributed_http_aggregator` and
-`tests` is preserved as historical prototype work only; it is non-deliverable and is excluded from
-the Maven build.
+The **final deliverable is the Java 21 implementation** in `src/main/java`, verified by Maven and
+JUnit.
 
 ## Technology stack
 
@@ -129,20 +127,20 @@ validation-before-I/O, asynchronous concurrency, timeout classification, cancell
 failure isolation, diagnostic redaction, cleanup, CLI exit codes, all scenarios, and the
 performance/reliability thresholds.
 
+The final performance verification measured `0.462817` seconds for concurrent execution versus
+`0.949622` seconds for the sequential baseline, a `2.052x` speedup.
+
 ## Engineering Reflection
 
 SDD guided the work by making the contracts, architecture, acceptance criteria, and verification
-evidence explicit before implementation. Specification analysis exposed mismatches such as the
-original Python-oriented plan versus the mandatory Java 21 constitution, and clarified exit codes,
-scenario names, ordering, and report shape before coding.
+evidence explicit before implementation. Specification analysis clarified exit codes, scenario
+names, ordering, and report shape before coding.
 
 Tests found defects that were easy to miss in a demonstration: timeout classification at the
 deadline boundary and a cancellation race that could lose settled outcomes or leave owned
-resources active. The migration from Python to Java 21 was managed as a formal specification and
-architecture update: Python remains unchanged historical evidence, while Maven compiles and
-packages only Java 21 sources. Coding-agent outputs were supervised through task dependencies,
-contract tests, focused integration tests, clean builds, executable-JAR smoke tests, and the
-final constitution audit rather than being accepted without verification.
+resources active. Coding-agent outputs were supervised through task dependencies, contract tests,
+focused integration tests, clean builds, executable-JAR smoke tests, and the final constitution
+audit rather than being accepted without verification.
 
 ## Specification and evidence links
 

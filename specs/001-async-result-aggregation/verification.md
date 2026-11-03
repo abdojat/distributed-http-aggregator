@@ -471,3 +471,16 @@ process IDs after the aggregation check.
 
 No constitutional exception or remaining delivery blocker was identified. T049, T050, T051, and
 T052 acceptance checkpoints are **PASS**.
+
+## Java-only submission cleanup verification
+
+**Date**: 2026-11-03
+
+- `.\mvnw.cmd clean verify`: **PASS**, exit 0; 51 JUnit tests, 0 failures, 0 errors, 0 skipped.
+- Executable-JAR scenarios: **PASS** for `normal`, `http-500`, `unavailable`, `timeout`,
+  `simultaneous`, `partial-failure`, and `all-fail`; each produced a complete report with
+  configured-order outcomes and the expected success/failure isolation.
+- `aggregate --config examples\invalid-run.json`: **PASS**, exit 2 with empty stdout.
+- All 52 task checkboxes remain complete.
+- Python application source, Python tests, `pyproject.toml`, virtual environment, and egg-info
+  are absent from the final worktree. The existing SDD evidence and Git history remain intact.
